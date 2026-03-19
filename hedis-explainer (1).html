@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HEDIS Measure Explainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ee; --paper: #fffdf9; --ink: #1a1714; --ink-mid: #4a4540;
+    --ink-light: #8a8480; --rule: #d8d4ce; --accent: #2a6049;
+    --accent-light: #e8f0ec; --accent-warm: #c84b2a; --tag-bg: #eae6e0;
+    --shadow: 0 2px 12px rgba(26,23,20,0.08), 0 1px 3px rgba(26,23,20,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; padding: 0 0 80px; }
+  header { background: var(--ink); color: var(--bg); padding: 28px 40px 24px; display: flex; align-items: baseline; gap: 20px; border-bottom: 3px solid var(--accent); }
+  .header-logo { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.15em; color: var(--accent-light); text-transform: uppercase; opacity: 0.7; }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; color: #fff; }
+  .header-sub { font-size: 12px; color: rgba(245,242,238,0.5); font-weight: 300; margin-left: auto; font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+  main { max-width: 900px; margin: 0 auto; padding: 40px 24px 0; }
+  .search-section { margin-bottom: 36px; }
+  .search-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-light); display: block; margin-bottom: 10px; }
+  .search-row { display: flex; gap: 10px; }
+  .measure-select { flex: 1; background: var(--paper); border: 1.5px solid var(--rule); border-radius: 4px; padding: 13px 40px 13px 18px; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; color: var(--ink); outline: none; box-shadow: var(--shadow); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8480' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; transition: border-color 0.2s; }
+  .measure-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,96,73,0.12); }
+  .search-btn { background: var(--accent); color: #fff; border: none; border-radius: 4px; padding: 14px 26px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; cursor: pointer; transition: background 0.2s; }
+  .search-btn:hover { background: #1e4d38; }
+  .knowledge-notice { margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-light); line-height: 1.5; }
+  .knowledge-notice strong { color: var(--ink-mid); }
+  .error-state { display: none; padding: 20px 24px; background: #fff5f3; border: 1.5px solid #f0c4b8; border-radius: 6px; color: var(--accent-warm); font-size: 14px; }
+  .error-state.visible { display: block; }
+  .results-card { display: none; background: var(--paper); border: 1.5px solid var(--rule); border-radius: 6px; box-shadow: var(--shadow); overflow: hidden; animation: fadeUp 0.3s ease; }
+  .results-card.visible { display: block; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .card-header { padding: 24px 28px 20px; border-bottom: 1.5px solid var(--rule); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .measure-id { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+  .measure-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; line-height: 1.2; }
+  .measure-desc { font-size: 13px; color: var(--ink-mid); font-weight: 300; margin-top: 6px; line-height: 1.5; max-width: 580px; }
+  .measure-tags { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+  .measure-tag { background: var(--accent-light); color: var(--accent); border: 1px solid rgba(42,96,73,0.2); border-radius: 3px; padding: 3px 9px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+  .sections-grid { display: grid; grid-template-columns: 1fr 1fr; }
+  .section { padding: 20px 28px; border-right: 1.5px solid var(--rule); border-bottom: 1.5px solid var(--rule); }
+  .section:nth-child(even) { border-right: none; }
+  .section:nth-last-child(-n+2) { border-bottom: none; }
+  .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .section-icon { width: 24px; height: 24px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .icon-denom { background: #e8f0ec; } .icon-numer { background: #e8f3ff; } .icon-excl { background: #fff3e8; } .icon-pitfall { background: #fff0f0; }
+  .section-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-light); }
+  .section-body { font-size: 13px; line-height: 1.65; color: var(--ink-mid); font-weight: 300; }
+  .section-body ul { padding-left: 18px; margin-top: 8px; }
+  .section-body li { margin-bottom: 4px; }
+  .pitfall-item { display: flex; gap: 10px; margin-bottom: 9px; padding: 9px 12px; background: #fffaf8; border-left: 3px solid var(--accent-warm); border-radius: 0 3px 3px 0; font-size: 13px; line-height: 1.5; color: var(--ink-mid); }
+  .pitfall-bullet { color: var(--accent-warm); flex-shrink: 0; margin-top: 1px; }
+  .codesets-section, .citations-section { border-top: 1.5px solid var(--rule); }
+  .codesets-body, .citations-body { padding: 10px 28px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .codeset-block { background: var(--bg); border: 1px solid var(--rule); border-radius: 4px; padding: 13px 15px; }
+  .codeset-component { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+  .codeset-desc { font-size: 12px; color: var(--ink-mid); font-weight: 300; margin-bottom: 9px; }
+  .code-type-block { margin-bottom: 9px; }
+  .code-type-block:last-child { margin-bottom: 0; }
+  .code-type-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); display: block; margin-bottom: 5px; }
+  .code-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
+  .code-chip { background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 3px 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; color: var(--ink); }
+  .code-note { font-size: 11.5px; color: var(--ink-light); font-style: italic; margin-top: 3px; }
+  .citation-item { font-size: 12.5px; line-height: 1.5; padding: 10px 14px; background: var(--bg); border-left: 3px solid var(--rule); border-radius: 0 3px 3px 0; }
+  .citation-source { font-weight: 500; color: var(--ink); margin-bottom: 2px; }
+  .citation-detail { color: var(--ink-mid); font-weight: 300; margin-bottom: 3px; }
+  .citation-url { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); text-decoration: none; word-break: break-all; }
+  .citation-url:hover { text-decoration: underline; }
+  .formula-row { padding: 14px 28px; background: var(--accent-light); border-top: 1.5px solid rgba(42,96,73,0.15); display: flex; align-items: center; gap: 12px; }
+  .formula-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex-shrink: 0; }
+  .formula-text { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); font-weight: 500; }
+  .empty-state { text-align: center; padding: 60px 24px; color: var(--ink-light); }
+  .empty-icon { font-size: 36px; margin-bottom: 14px; opacity: 0.4; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--ink-mid); margin-bottom: 8px; opacity: 0.6; }
+  .empty-sub { font-size: 13px; font-weight: 300; opacity: 0.7; }
+  @media (max-width: 600px) {
+    header { padding: 20px 18px; gap: 12px; flex-wrap: wrap; }
+    .header-sub { display: none; }
+    main { padding: 24px 16px 0; }
+    .sections-grid { grid-template-columns: 1fr; }
+    .section { border-right: none; }
+    .section:nth-last-child(-n+2) { border-bottom: 1.5px solid var(--rule); }
+    .section:last-child { border-bottom: none; }
+    .card-header { flex-direction: column; }
+    .codesets-body, .citations-body { padding: 10px 16px 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="header-logo">NCQA</span>
+  <span class="header-title">HEDIS Measure Explainer</span>
+  <span class="header-sub">MY 2024/2025 · Plain-language reference</span>
+</header>
+<main>
+  <div class="search-section">
+    <label class="search-label" for="measureSelect">Select a HEDIS measure</label>
+    <div class="search-row">
+      <select class="measure-select" id="measureSelect">
+        <option value="">— Choose a measure —</option>
+        <optgroup label="Cardiovascular">
+          <option value="CBP">CBP – Controlling High Blood Pressure</option>
+          <option value="PBH">PBH – Persistence of Beta-Blocker Treatment After a Heart Attack</option>
+        </optgroup>
+        <optgroup label="Diabetes">
+          <option value="CDC_A1C_POOR">CDC – HbA1c Poor Control (&gt;9%)</option>
+          <option value="CDC_A1C_GOOD">CDC – HbA1c Control (&lt;8%)</option>
+          <option value="CDC_BP">CDC – Blood Pressure Control (&lt;140/90)</option>
+          <option value="CDC_EYE">CDC – Eye Exam (Retinal)</option>
+          <option value="CDC_KED">CDC – Kidney Health Evaluation</option>
+        </optgroup>
+        <optgroup label="Cancer Screening">
+          <option value="BCS">BCS – Breast Cancer Screening</option>
+          <option value="CCS">CCS – Cervical Cancer Screening</option>
+          <option value="COL">COL – Colorectal Cancer Screening</option>
+        </optgroup>
+        <optgroup label="Behavioral Health">
+          <option value="FUH">FUH – Follow-Up After Hospitalization for Mental Illness</option>
+          <option value="FUM">FUM – Follow-Up After ED Visit for Mental Illness</option>
+          <option value="ADD">ADD – Follow-Up Care for Children Prescribed ADHD Medication</option>
+          <option value="SAA">SAA – Adherence to Antipsychotics for Schizophrenia</option>
+        </optgroup>
+        <optgroup label="Child &amp; Adolescent">
+          <option value="AWC">AWC – Child and Adolescent Well-Care Visits</option>
+          <option value="W34">W34 – Well-Child Visits in the First 30 Months</option>
+          <option value="IMA">IMA – Immunizations for Adolescents</option>
+          <option value="CHL">CHL – Chlamydia Screening in Women</option>
+        </optgroup>
+        <optgroup label="Medication Management">
+          <option value="MRP">MRP – Medication Reconciliation Post-Discharge</option>
+          <option value="MAD">MAD – Medication Adherence for Diabetes Medications</option>
+          <option value="MAS">MAS – Medication Adherence for Cholesterol (Statins)</option>
+          <option value="MAP">MAP – Medication Adherence for Hypertension (RAS Antagonists)</option>
+        </optgroup>
+        <optgroup label="Access &amp; Utilization">
+          <option value="PPC">PPC – Prenatal and Postpartum Care</option>
+          <option value="PCR">PCR – Plan All-Cause Readmissions</option>
+          <option value="AIS">AIS – Adult Immunization Status</option>
+        </optgroup>
+      </select>
+      <button class="search-btn" onclick="showMeasure()">EXPLAIN</button>
+    </div>
+    <p class="knowledge-notice"><strong>Note:</strong> Content reflects NCQA HEDIS MY 2024/2025 specifications based on Claude's training knowledge (through August 2025). Always verify code sets and page references against the current NCQA Value Set Directory and published specifications before production use.</p>
+  </div>
+  <div class="error-state" id="errorState"></div>
+  <div class="results-card" id="resultsCard"><div id="resultsContent"></div></div>
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">⊕</div>
+    <div class="empty-title">Select a HEDIS measure above</div>
+    <div class="empty-sub">25 measures across MY 2024/2025 — denominator, numerator,<br>exclusions, code sets, pitfalls, and citations. No login required.</div>
+  </div>
+</main>
+<script>
+const MEASURES = {
+  CBP: {
+    measureId:"CBP", measureName:"Controlling High Blood Pressure", domain:"Effectiveness of Care / Adult",
+    tags:["Hypertension","Blood Pressure","Cardiovascular","Adult"],
+    shortDescription:"Percentage of members 18–85 with hypertension whose blood pressure was adequately controlled (<140/90) during the measurement year.",
+    denominator:{ summary:"Members 18–85 with a diagnosis of essential hypertension (I10) on or before June 30 of the measurement year, with continuous enrollment for the year.", keyDetails:["Age 18–85 as of December 31","Hypertension diagnosis on or before June 30","Continuous enrollment; max one gap of ≤45 days"] },
+    numerator:{ summary:"Members whose most recent blood pressure reading in the measurement year was systolic <140 mmHg AND diastolic <90 mmHg. Only the single most recent reading is used.", keyDetails:["Most recent BP reading in measurement year","Systolic <140 AND diastolic <90 both required","Reading must come from an outpatient or telehealth visit"] },
+    exclusions:{ summary:"Members with ESRD, dialysis, kidney transplant, pregnancy, or hospice are excluded.", items:["ESRD or dialysis at any time during measurement year","Kidney transplant recipient","Pregnancy during measurement year","Hospice enrollment"] },
+    dataPitfalls:[
+      {title:"Most Recent Reading Only", detail:"Only the single latest BP in the measurement year is used — not an average. If multiple readings exist, use the one with the latest date of service."},
+      {title:"Both Values Required", detail:"Both systolic AND diastolic must be present and controlled. A missing diastolic or an elevated diastolic fails the numerator even if systolic is fine."},
+      {title:"Diagnosis Timing", detail:"The hypertension diagnosis must appear on or before June 30. A diagnosis first coded on July 1 or later does not create denominator eligibility."},
+      {title:"Outpatient Source Only", detail:"BP readings from inpatient stays or observation claims are not acceptable. Must come from an outpatient or telehealth encounter."}
+    ],
+    codeSets:[
+      {component:"Denominator – Hypertension Diagnosis", description:"Essential hypertension diagnosis", codeTypes:[{type:"ICD-10-CM", codes:["I10"], note:"Essential (primary) hypertension — the only qualifying diagnosis code"}]},
+      {component:"Numerator – BP Values", description:"Blood pressure as structured vital sign data; typically captured via LOINC in lab/EHR feeds", codeTypes:[{type:"LOINC", codes:["8480-6","8462-4","55284-4","8478-0"], note:"Systolic (8480-6), Diastolic (8462-4), BP panel (55284-4)"}]},
+      {component:"Exclusion – ESRD / Dialysis", description:"End-stage renal disease and dialysis codes", codeTypes:[{type:"ICD-10-CM", codes:["N18.6","Z99.2"], note:"ESRD (N18.6), dependence on renal dialysis (Z99.2)"},{type:"CPT", codes:["90935","90937","90940","90945","90947"], note:"Hemodialysis and peritoneal dialysis procedure codes"}]}
+    ],
+    citations:[
+      {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Controlling High Blood Pressure (CBP), Effectiveness of Care", url:"https://www.ncqa.org/hedis/measures/controlling-high-blood-pressure/"},
+      {source:"NCQA Value Set Directory", detail:"Hypertension, Blood Pressure value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+    ],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  PBH: {
+    measureId:"PBH", measureName:"Persistence of Beta-Blocker Treatment After a Heart Attack", domain:"Effectiveness of Care / Adult",
+    tags:["Cardiovascular","AMI","Medication Adherence","Adult"],
+    shortDescription:"Percentage of members 18+ discharged after an acute MI who received persistent beta-blocker treatment (PDC ≥80%) for 6 months post-discharge.",
+    denominator:{ summary:"Members 18+ discharged alive after an inpatient stay with a principal AMI diagnosis who received a beta-blocker fill within 7 days of discharge.", keyDetails:["Age 18+ at discharge","Principal AMI diagnosis (I21.x, I22.x)","Beta-blocker fill within 7 days of discharge","Continuous enrollment for 6 months post-discharge"] },
+    numerator:{ summary:"Members whose proportion of days covered (PDC) by beta-blocker fills was ≥80% across the 6-month post-discharge window.", keyDetails:["PDC ≥80% over 180 days post-discharge","All qualifying beta-blocker fills combined for PDC","Carvedilol, metoprolol, atenolol, bisoprolol, propranolol qualify"] },
+    exclusions:{ summary:"Members with documented contraindications or who disenroll during follow-up are excluded.", items:["Documented clinical contraindication to beta-blockers","Death during follow-up","Disenrollment during 6-month window","Hospice"] },
+    dataPitfalls:[
+      {title:"7-Day Fill Requirement", detail:"The index beta-blocker fill must occur within 7 days of discharge. Missing this fill removes the member from the denominator entirely — they are not penalized, just unmeasured."},
+      {title:"PDC vs MPR", detail:"HEDIS uses PDC (Proportion of Days Covered), not MPR. Overlapping fill days are capped at the measurement window length to avoid over-counting."},
+      {title:"Index Discharge Date", detail:"Only the first qualifying AMI discharge is used as the index event. Subsequent AMI stays complicate the follow-up period and require careful sequencing logic."}
+    ],
+    codeSets:[
+      {component:"Denominator – AMI Diagnosis", description:"Acute myocardial infarction principal inpatient diagnosis codes", codeTypes:[{type:"ICD-10-CM", codes:["I21.0","I21.1","I21.2","I21.3","I21.4","I21.9","I22.0","I22.1","I22.8","I22.9"], note:"ST-elevation (I21.0–I21.3), NSTEMI (I21.4), unspecified (I21.9), subsequent AMI (I22.x)"}]},
+      {component:"Numerator – Beta-Blocker Medications", description:"Beta-blocker drug classes for PDC calculation", codeTypes:[{type:"RxNorm / NDC", codes:["Carvedilol","Metoprolol succinate","Metoprolol tartrate","Atenolol","Bisoprolol","Propranolol","Nadolol"], note:"Use NCQA Beta-Blocker Medications value set for full NDC list"}]}
+    ],
+    citations:[
+      {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Persistence of Beta-Blocker Treatment After a Heart Attack (PBH)", url:"https://www.ncqa.org/hedis/measures/persistence-of-beta-blocker-treatment-after-a-heart-attack/"},
+      {source:"NCQA Value Set Directory", detail:"AMI Diagnosis, Beta-Blocker Medications value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+    ],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  CDC_A1C_POOR: {
+    measureId:"CDC", measureName:"Comprehensive Diabetes Care – HbA1c Poor Control (>9%)", domain:"Effectiveness of Care / Adult",
+    tags:["Diabetes","HbA1c","Lab","Inverse Measure"],
+    shortDescription:"Percentage of members 18–75 with diabetes whose most recent HbA1c in the measurement year was >9.0% (poor control). This is an inverse measure — lower rates are better.",
+    denominator:{ summary:"Members 18–75 with type 1 or type 2 diabetes who had at least two outpatient/ED encounters with a diabetes diagnosis (or one acute inpatient encounter) and continuous enrollment.", keyDetails:["Age 18–75 as of December 31","Type 1 (E10.x) or Type 2 (E11.x) diabetes","Two qualifying outpatient/ED encounters OR one acute inpatient encounter","Continuous enrollment for the measurement year"] },
+    numerator:{ summary:"Members whose most recent HbA1c in the measurement year was >9.0%, OR who had no HbA1c test at all during the measurement year (both count as poor control).", keyDetails:["Most recent HbA1c result >9.0%","No HbA1c test also counts as numerator (treated as worst outcome)","Only one data source needed — most recent result used"] },
+    exclusions:{ summary:"Members with gestational/steroid-induced diabetes only, ESRD, or hospice are excluded.", items:["Gestational or steroid-induced diabetes only (no Type 1/2 diagnosis)","ESRD during measurement year","Hospice enrollment"] },
+    dataPitfalls:[
+      {title:"Missing Lab = Numerator Hit", detail:"Unlike most measures, a missing HbA1c test counts as poor control (numerator). Lab data completeness is critical — gaps in lab feeds inflate the rate artificially."},
+      {title:"Inverse Measure — Lower Is Better", detail:"A higher percentage means worse performance. Dashboard display logic must clearly communicate this direction; default ascending charts are misleading."},
+      {title:"Two-Event Denominator", detail:"Two separate outpatient dates with a diabetes diagnosis are required. Single-encounter members are often incorrectly excluded, undercounting the denominator."},
+      {title:"Diagnosis Code Specificity", detail:"Gestational diabetes (O24.x) alone does not qualify. Members need a true Type 1 or Type 2 code on qualifying encounters."}
+    ],
+    codeSets:[
+      {component:"Denominator – Diabetes Diagnosis", description:"Type 1 and Type 2 diabetes ICD-10-CM codes", codeTypes:[{type:"ICD-10-CM", codes:["E10.9","E10.65","E10.40","E10.00","E11.9","E11.65","E11.40","E11.00"], note:"E10.x = Type 1, E11.x = Type 2; full value set includes all complication subcodes"}]},
+      {component:"Numerator – HbA1c Lab Result", description:"Hemoglobin A1c LOINC codes; result >9.0% triggers numerator", codeTypes:[{type:"LOINC", codes:["4548-4","4549-2","17856-6","59261-8","62388-4","71875-9"], note:"HbA1c as % (4548-4 most common); result threshold >9.0%"}]}
+    ],
+    citations:[
+      {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – HbA1c Poor Control indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"},
+      {source:"NCQA Value Set Directory", detail:"Diabetes, HbA1c Tests value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+    ],
+    formulaNote:"Numerator / Denominator × 100 — LOWER rate = better performance (inverse measure)"
+  },
+  CDC_A1C_GOOD: {
+    measureId:"CDC", measureName:"Comprehensive Diabetes Care – HbA1c Control (<8%)", domain:"Effectiveness of Care / Adult",
+    tags:["Diabetes","HbA1c","Lab","Adult"],
+    shortDescription:"Percentage of members 18–75 with diabetes whose most recent HbA1c in the measurement year was <8.0% (good control). Higher rates are better.",
+    denominator:{ summary:"Members 18–75 with type 1 or type 2 diabetes, two qualifying outpatient/ED encounters with diabetes diagnosis, and continuous enrollment.", keyDetails:["Age 18–75","Type 1 or Type 2 diabetes on two or more encounter dates","Continuous enrollment"] },
+    numerator:{ summary:"Members whose most recent HbA1c result during the measurement year was <8.0%. Members with no HbA1c test are NOT in the numerator.", keyDetails:["Most recent HbA1c <8.0%","No test = not in numerator (unlike the >9% indicator)","Lab must come from an acceptable data source"] },
+    exclusions:{ summary:"Same as all CDC indicators: gestational/steroid-induced diabetes only, ESRD, hospice.", items:["Gestational or steroid-induced diabetes only","ESRD","Hospice"] },
+    dataPitfalls:[
+      {title:"No Test ≠ Numerator", detail:"Unlike the HbA1c >9% indicator, a missing lab result does NOT count as failing. Members without a test simply do not satisfy the numerator criterion."},
+      {title:"Most Recent Result Only", detail:"Earlier controlled results in the year do not help if the most recent reading is ≥8%. Query logic must correctly identify the latest dated result."},
+      {title:"Lab Feed Completeness", detail:"Results must flow through a connected data source. Faxed or manually entered labs not in the claims/lab feed appear as no-test, reducing the numerator rate."}
+    ],
+    codeSets:[
+      {component:"Denominator – Diabetes Diagnosis", description:"Type 1 and Type 2 diabetes", codeTypes:[{type:"ICD-10-CM", codes:["E10.9","E11.9","E11.65","E10.65","E11.40","E10.40"], note:"All E10.x and E11.x subcodes included in full value set"}]},
+      {component:"Numerator – HbA1c Lab Result", description:"HbA1c codes; result <8.0% required for numerator", codeTypes:[{type:"LOINC", codes:["4548-4","4549-2","17856-6","59261-8"], note:"Result threshold <8.0% for this indicator"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – HbA1c Control (<8%) indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  CDC_BP: {
+    measureId:"CDC", measureName:"Comprehensive Diabetes Care – Blood Pressure Control (<140/90)", domain:"Effectiveness of Care / Adult",
+    tags:["Diabetes","Blood Pressure","Cardiovascular","Adult"],
+    shortDescription:"Percentage of members 18–75 with diabetes whose most recent blood pressure reading was <140/90 mmHg.",
+    denominator:{ summary:"Members 18–75 with type 1 or type 2 diabetes and two qualifying outpatient/ED encounters with a diabetes diagnosis.", keyDetails:["Age 18–75","Type 1 or Type 2 diabetes on two encounter dates","Continuous enrollment"] },
+    numerator:{ summary:"Members whose most recent BP in the measurement year had systolic <140 mmHg AND diastolic <90 mmHg. A missing BP does not count as a numerator.", keyDetails:["Most recent reading in measurement year","Systolic <140 AND diastolic <90","Outpatient source required"] },
+    exclusions:{ summary:"Gestational/steroid-induced diabetes only, ESRD, hospice.", items:["Gestational or steroid-induced diabetes only","ESRD","Hospice"] },
+    dataPitfalls:[
+      {title:"Mirrors CBP Logic", detail:"BP logic is the same as the CBP measure — most recent reading only, both values required, outpatient source only. Inpatient readings are not acceptable here either."},
+      {title:"Missing = Non-Compliant", detail:"Unlike HbA1c >9%, a missing BP reading does not count as a numerator failure; the member simply does not qualify for the numerator."}
+    ],
+    codeSets:[
+      {component:"Denominator – Diabetes Diagnosis", description:"Type 1 and Type 2 diabetes", codeTypes:[{type:"ICD-10-CM", codes:["E10.9","E11.9","E11.65","E10.65"], note:"All E10.x and E11.x subcodes included"}]},
+      {component:"Numerator – Blood Pressure Values", description:"Blood pressure LOINC codes", codeTypes:[{type:"LOINC", codes:["8480-6","8462-4","55284-4"], note:"Systolic (8480-6), Diastolic (8462-4), BP panel (55284-4)"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – Blood Pressure Control indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  CDC_EYE: {
+    measureId:"CDC", measureName:"Comprehensive Diabetes Care – Eye Exam (Retinal)", domain:"Effectiveness of Care / Adult",
+    tags:["Diabetes","Retinal Exam","Eye Care","Adult"],
+    shortDescription:"Percentage of members 18–75 with diabetes who had a retinal or dilated eye exam by an eye care professional during the measurement year, or a negative exam in the prior year.",
+    denominator:{ summary:"Members 18–75 with type 1 or type 2 diabetes and two qualifying outpatient/ED encounters.", keyDetails:["Age 18–75","Type 1 or Type 2 diabetes (two encounters)","Continuous enrollment"] },
+    numerator:{ summary:"Members who had a retinal/dilated eye exam by an optometrist or ophthalmologist in the measurement year, OR had a negative retinal exam documented in the prior year.", keyDetails:["Retinal or dilated exam in measurement year","OR negative exam in the year prior (2-year look-back)","Must be performed by eye care professional"] },
+    exclusions:{ summary:"Gestational/steroid-induced diabetes only, ESRD, hospice.", items:["Gestational or steroid-induced diabetes only","ESRD","Hospice"] },
+    dataPitfalls:[
+      {title:"Prior-Year Negative Counts", detail:"A documented negative exam from the prior year satisfies the current year's numerator. This two-year look-back is frequently omitted from query logic."},
+      {title:"Provider Type Matters", detail:"The exam must be performed by an optometrist or ophthalmologist. A PCP noting 'eyes normal' does not qualify — it must be billed by an eye care provider."},
+      {title:"Teleretinal Imaging Eligible", detail:"Remote retinal imaging read by an eye care professional qualifies. Ensure your code set includes teleretinal billing codes (G0053, G0054)."}
+    ],
+    codeSets:[
+      {component:"Numerator – Retinal Exam", description:"Eye exam procedure codes qualifying for the numerator", codeTypes:[
+        {type:"CPT", codes:["2022F","2023F","2024F","2025F","2026F","92225","92226","92227","92228"], note:"Category II retinal exam codes (2022F–2026F); ophthalmoscopy codes (92225/92226)"},
+        {type:"HCPCS", codes:["G0053","G0054"], note:"Remote retinal imaging (teleretinal) codes"}
+      ]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – Eye Exam (Retinal) indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  CDC_KED: {
+    measureId:"CDC", measureName:"Comprehensive Diabetes Care – Kidney Health Evaluation", domain:"Effectiveness of Care / Adult",
+    tags:["Diabetes","Kidney","Lab","Adult"],
+    shortDescription:"Percentage of members 18–75 with diabetes who received both a urine albumin test AND a serum creatinine or eGFR test during the measurement year.",
+    denominator:{ summary:"Members 18–75 with type 1 or type 2 diabetes and continuous enrollment.", keyDetails:["Age 18–75","Type 1 or Type 2 diabetes (two qualifying encounters)","Continuous enrollment"] },
+    numerator:{ summary:"Members who had BOTH a urine albumin test AND a serum creatinine or eGFR test during the measurement year. Both tests must be present.", keyDetails:["Urine albumin (spot or timed) during measurement year","AND serum creatinine or eGFR during measurement year","Both tests required in same measurement year"] },
+    exclusions:{ summary:"ESRD, kidney transplant, hospice, gestational/steroid diabetes only.", items:["ESRD","Kidney transplant","Hospice","Gestational/steroid-induced diabetes only"] },
+    dataPitfalls:[
+      {title:"Both Tests Required", detail:"This is a conjunctive measure — urine albumin AND kidney function (creatinine/eGFR) must both be present. Having only one test fails the numerator."},
+      {title:"ACR vs Microalbumin", detail:"Both albumin-to-creatinine ratio (ACR) and standalone microalbumin tests qualify. Ensure your lab LOINC list includes both collection methods."},
+      {title:"Replaced ACE/ARB Indicator", detail:"This indicator replaced the older ACE/ARB medication adherence sub-measure starting MY 2023. Dashboards still referencing ACE/ARB need updating."}
+    ],
+    codeSets:[
+      {component:"Numerator – Urine Albumin", description:"Urine albumin and microalbumin lab LOINC codes", codeTypes:[{type:"LOINC", codes:["14957-5","14958-3","14959-1","30000-4","32294-1","9318-7"], note:"Microalbumin/creatinine ratio (14957-5), 24-hr urine albumin, spot urine tests"}]},
+      {component:"Numerator – Creatinine / eGFR", description:"Kidney function lab codes", codeTypes:[{type:"LOINC", codes:["2160-0","38483-4","70969-1","48642-3","48643-1","33914-3"], note:"Serum creatinine (2160-0), eGFR CKD-EPI (70969-1), MDRD-based eGFR codes"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – Kidney Health Evaluation indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  BCS: {
+    measureId:"BCS", measureName:"Breast Cancer Screening", domain:"Effectiveness of Care / Adult",
+    tags:["Cancer Screening","Mammography","Women","Adult"],
+    shortDescription:"Percentage of women 50–74 who had at least one mammogram during the measurement year or the prior year (two-year look-back).",
+    denominator:{ summary:"Women 50–74 continuously enrolled for the measurement year and the prior year.", keyDetails:["Women only","Age 50–74 as of December 31","Continuous enrollment: measurement year + prior year","Max one gap of ≤45 days"] },
+    numerator:{ summary:"Women who had at least one mammogram (screening or diagnostic) in the two-year measurement window (current year or prior year).", keyDetails:["Mammogram any time in the 2-year window","Screening and diagnostic mammograms both qualify","Digital, 3D (tomosynthesis), and film all qualify"] },
+    exclusions:{ summary:"Women with bilateral mastectomy or two separate unilateral mastectomies at any time in history are excluded.", items:["Bilateral mastectomy (any time in history)","Two separate unilateral mastectomies (left + right)","Hospice enrollment"] },
+    dataPitfalls:[
+      {title:"Two-Year Look-Back", detail:"The window spans two calendar years — a mammogram in January of the prior year still counts. Make sure your query looks back to January 1 of the year before the measurement year."},
+      {title:"Mastectomy Laterality Logic", detail:"Two separate unilateral mastectomy codes (one left, one right) at any time in history equal a bilateral exclusion. This requires laterality-aware logic across claim history."},
+      {title:"3D Mammography (Tomosynthesis)", detail:"CPT 77063 (3D add-on) qualifies. It may be billed alongside 77067 or as an add-on. Make sure it's in your code list."}
+    ],
+    codeSets:[
+      {component:"Numerator – Mammography", description:"Mammography procedure codes", codeTypes:[
+        {type:"CPT", codes:["77065","77066","77067","77063"], note:"Unilateral (77065), bilateral (77066), screening bilateral (77067), 3D add-on (77063)"},
+        {type:"HCPCS", codes:["G0202","G0204","G0206"], note:"Medicare screening and diagnostic mammography codes"}
+      ]},
+      {component:"Exclusion – Mastectomy", description:"Mastectomy procedure and history codes", codeTypes:[
+        {type:"CPT", codes:["19180","19200","19220","19240","19303","19304","19305","19306","19307"], note:"Simple, modified radical, and radical mastectomy codes"},
+        {type:"ICD-10-CM", codes:["Z90.10","Z90.11","Z90.12","Z90.13"], note:"Acquired absence of breast (Z90.1x); laterality distinguishes unilateral vs bilateral"}
+      ]}
+    ],
+    citations:[
+      {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Breast Cancer Screening (BCS)", url:"https://www.ncqa.org/hedis/measures/breast-cancer-screening/"},
+      {source:"NCQA Value Set Directory", detail:"Mammography, Mastectomy value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+    ],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  CCS: {
+    measureId:"CCS", measureName:"Cervical Cancer Screening", domain:"Effectiveness of Care / Adult",
+    tags:["Cancer Screening","Cervical","Pap","Women"],
+    shortDescription:"Percentage of women 21–64 screened for cervical cancer: Pap test within 3 years (ages 21–64) or Pap + HPV co-test within 5 years (ages 30–64).",
+    denominator:{ summary:"Women 21–64 continuously enrolled for the measurement year.", keyDetails:["Women only","Age 21–64 as of December 31","Continuous enrollment"] },
+    numerator:{ summary:"Women who had a Pap test within 3 years (ages 21–64), or a Pap plus HPV co-test within 5 years (ages 30–64), measured from the end of the measurement year.", keyDetails:["Age 21–64: Pap within 3 years","Age 30–64: Pap + HPV co-test within 5 years also qualifies","Look-back up to 5 years for co-testing scenario"] },
+    exclusions:{ summary:"Women who have had a hysterectomy with removal of the cervix are excluded at any time in history.", items:["Hysterectomy with cervical removal (any time)","Cervical agenesis","Acquired absence of cervix","Hospice"] },
+    dataPitfalls:[
+      {title:"Multi-Year Look-Back", detail:"The look-back is 3 years for Pap alone and 5 years for co-testing. Your query must apply the correct start date based on which test type is being evaluated."},
+      {title:"HPV Alone Does Not Qualify", detail:"An HPV test without a concurrent Pap does not satisfy the numerator for any age group. Co-testing requires both results."},
+      {title:"Supracervical Hysterectomy", detail:"Supracervical (subtotal) hysterectomy (CPT 58180) does NOT qualify as an exclusion because the cervix is retained. Only total or radical hysterectomy codes count."}
+    ],
+    codeSets:[
+      {component:"Numerator – Pap Test", description:"Cervical cytology procedure codes", codeTypes:[{type:"CPT", codes:["88141","88142","88143","88147","88148","88150","88152","88153","88164","88165","88174","88175"], note:"Pap cytology collection and interpretation codes; partial list — see NCQA value set"}]},
+      {component:"Numerator – HPV Test (co-test)", description:"High-risk HPV NAAT codes used alongside Pap", codeTypes:[
+        {type:"CPT", codes:["87620","87621","87622","87623","87624","87625"], note:"HPV DNA detection by nucleic acid probe"},
+        {type:"LOINC", codes:["21440-3","30167-1","38372-9","59263-4"], note:"HPV high-risk panel LOINC codes"}
+      ]},
+      {component:"Exclusion – Hysterectomy with Cervical Removal", description:"Total and radical hysterectomy codes", codeTypes:[{type:"CPT", codes:["58150","58152","58200","58210","58240","58260","58262","58263","58267","58270","58275","58285"], note:"Total hysterectomy codes; excludes 58180 (supracervical — cervix retained)"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Cervical Cancer Screening (CCS)", url:"https://www.ncqa.org/hedis/measures/cervical-cancer-screening/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  COL: {
+    measureId:"COL", measureName:"Colorectal Cancer Screening", domain:"Effectiveness of Care / Adult",
+    tags:["Cancer Screening","Colonoscopy","Colorectal","Adult"],
+    shortDescription:"Percentage of members 45–75 who had appropriate colorectal cancer screening during the required look-back period for the chosen modality.",
+    denominator:{ summary:"Members 45–75 continuously enrolled for the measurement year.", keyDetails:["Age 45–75 as of December 31 (expanded from 50 starting MY 2023)","Continuous enrollment; max one gap of ≤45 days"] },
+    numerator:{ summary:"Members who had one of the accepted screening methods within the required look-back: colonoscopy (10 yrs), CT colonography (5 yrs), sigmoidoscopy (5 yrs), FIT-DNA (1–3 yrs), or annual FOBT/FIT (1 yr).", keyDetails:["Colonoscopy within 10 years","CT colonography within 5 years","Flexible sigmoidoscopy within 5 years","FIT-DNA (Cologuard) within 1–3 years","Annual FOBT or FIT within 1 year"] },
+    exclusions:{ summary:"Members with colorectal cancer history or total colectomy at any time in history.", items:["Colorectal cancer diagnosis at any time","Total colectomy at any time","Hospice"] },
+    dataPitfalls:[
+      {title:"Multiple Look-Back Periods", detail:"Each test type has a distinct look-back window. Colonoscopy goes back 10 years; FIT only 1 year. You need separate date arithmetic per test type in your query."},
+      {title:"Age 45 Expansion", detail:"NCQA expanded the age range from 50–75 to 45–75 starting MY 2023. Hard-coded age-50 queries will undercount the denominator by several years of members."},
+      {title:"Surveillance Colonoscopy Qualifies", detail:"Colonoscopies coded as surveillance (post-polyp follow-up) still count for HEDIS even though they may not be classified as 'screening' in clinical terms."},
+      {title:"FIT-DNA Interval Varies by Year", detail:"Cologuard's look-back interval has changed across NCQA measure years (1 vs 3 years). Confirm the exact interval for the specific measurement year being reported."}
+    ],
+    codeSets:[
+      {component:"Numerator – Colonoscopy (10-year look-back)", description:"Colonoscopy procedure codes", codeTypes:[{type:"CPT", codes:["45378","45379","45380","45381","45382","45383","45384","45385","45386","45388","45390","45391","45392","45393","45394"], note:"Colonoscopy with/without biopsy or polypectomy; partial list — full NCQA value set is extensive"}]},
+      {component:"Numerator – CT Colonography (5-year look-back)", description:"Virtual colonoscopy codes", codeTypes:[{type:"CPT", codes:["74261","74262","74263"], note:"Without contrast (74261), with contrast (74262), diagnostic (74263)"}]},
+      {component:"Numerator – Flexible Sigmoidoscopy (5-year look-back)", description:"Sigmoidoscopy procedure codes", codeTypes:[{type:"CPT", codes:["45330","45331","45332","45333","45334","45335","45338","45340","45341","45342","45345"], note:"Sigmoidoscopy with/without biopsy or polypectomy"}]},
+      {component:"Numerator – FOBT / FIT (1-year look-back)", description:"Fecal occult blood and immunoassay test codes", codeTypes:[
+        {type:"CPT", codes:["82270","82274"], note:"Guaiac FOBT (82270), immunoassay FIT (82274)"},
+        {type:"HCPCS", codes:["G0328"], note:"Colorectal cancer screening; fecal occult blood test, immunoassay"}
+      ]},
+      {component:"Numerator – FIT-DNA / Cologuard", description:"Stool DNA test codes", codeTypes:[
+        {type:"CPT", codes:["81528"], note:"Oncology colorectal cancer screening, quantitative"},
+        {type:"HCPCS", codes:["G0464"], note:"Colorectal cancer screening; stool-based DNA and occult blood"}
+      ]}
+    ],
+    citations:[
+      {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Colorectal Cancer Screening (COL)", url:"https://www.ncqa.org/hedis/measures/colorectal-cancer-screening/"},
+      {source:"NCQA Value Set Directory", detail:"Colonoscopy, CT Colonography, Sigmoidoscopy, FOBT, FIT-DNA value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+    ],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  FUH: {
+    measureId:"FUH", measureName:"Follow-Up After Hospitalization for Mental Illness", domain:"Effectiveness of Care / Behavioral Health",
+    tags:["Behavioral Health","Follow-Up","Inpatient","Mental Illness"],
+    shortDescription:"Percentage of inpatient mental illness discharges (members age 6+) with a follow-up mental health visit within 7 days and within 30 days post-discharge. Reported as two rates.",
+    denominator:{ summary:"Inpatient discharges (not unique members) for individuals age 6+ with a principal mental illness diagnosis, discharged alive, with continuous enrollment 30 days post-discharge.", keyDetails:["Age 6+ at discharge","Principal diagnosis of mental illness (not substance use alone)","Discharged alive","Continuous enrollment 30 days post-discharge","Event-level: one member with two stays = two denominator events"] },
+    numerator:{ summary:"Rate 1: any mental health follow-up visit within 30 days. Rate 2: mental health follow-up within 7 days. Both rates require a qualified mental health practitioner.", keyDetails:["Rate 1: mental health visit within 30 days of discharge","Rate 2: mental health visit within 7 days of discharge","Telehealth visits qualify","Must be with a qualified mental health practitioner"] },
+    exclusions:{ summary:"Discharges to SNF/LTC, hospice, or followed by death within 30 days are excluded.", items:["Discharge to SNF, long-term care, or another inpatient facility","Death within 30 days of discharge","Hospice","Readmission to acute psychiatric setting within 30 days affects measurement window"] },
+    dataPitfalls:[
+      {title:"Event-Level Measure", detail:"This is measured per discharge, not per member. A member with two qualifying inpatient stays contributes two events. Aggregate queries that deduplicate by member will undercount the denominator."},
+      {title:"Mental Health Practitioner Required", detail:"Follow-up must be with a qualified mental health practitioner. A PCP refilling psych meds without a mental health visit code does not qualify."},
+      {title:"7-Day Rate Is a Subset", detail:"Rate 2 (7-day) is a subset of Rate 1 (30-day). A member followed up within 7 days is counted in both rates. Query logic must handle the nested structure correctly."},
+      {title:"Principal Diagnosis Only", detail:"The index hospitalization must have mental illness as the PRINCIPAL diagnosis. A secondary mental health code on a primarily medical stay does not create a denominator event."}
+    ],
+    codeSets:[
+      {component:"Denominator – Mental Illness Principal Diagnosis", description:"Principal inpatient diagnosis codes for mental illness", codeTypes:[{type:"ICD-10-CM", codes:["F20.9","F25.0","F25.1","F31.9","F32.9","F33.9","F41.1","F43.10","F60.3","F84.0","F90.9"], note:"Schizophrenia (F20), schizoaffective (F25), bipolar (F31), MDD (F32/F33), anxiety (F41), PTSD (F43), BPD (F60.3), autism (F84), ADHD (F90); partial list"}]},
+      {component:"Numerator – Mental Health Follow-Up Visit", description:"Outpatient mental health visit codes", codeTypes:[{type:"CPT", codes:["90791","90792","90832","90834","90837","90838","90839","90840","90845","90847","90853"], note:"Psychiatric evaluation (90791/92), psychotherapy (90832–38), crisis (90839/40), group therapy (90853)"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Follow-Up After Hospitalization for Mental Illness (FUH)", url:"https://www.ncqa.org/hedis/measures/follow-up-after-hospitalization-for-mental-illness/"}],
+    formulaNote:"Two rates (7-day and 30-day) — higher rate = better performance"
+  },
+  FUM: {
+    measureId:"FUM", measureName:"Follow-Up After Emergency Department Visit for Mental Illness", domain:"Effectiveness of Care / Behavioral Health",
+    tags:["Behavioral Health","ED","Follow-Up","Mental Illness"],
+    shortDescription:"Percentage of ED visits for mental illness (members age 6+) that were not followed by inpatient admission and did result in a follow-up mental health visit within 7 and 30 days.",
+    denominator:{ summary:"ED visits with a principal mental illness diagnosis for members 6+ that did NOT result in an inpatient admission, with continuous enrollment 30 days post-visit.", keyDetails:["Age 6+ at ED visit date","Principal mental illness diagnosis in ED","ED visit did NOT result in inpatient admission same or next day","Continuous enrollment 30 days post-visit"] },
+    numerator:{ summary:"Rate 1: mental health follow-up within 30 days. Rate 2: mental health follow-up within 7 days. Mental health practitioner required.", keyDetails:["Rate 1: follow-up within 30 days","Rate 2: follow-up within 7 days","Telehealth qualifies","Mental health practitioner required"] },
+    exclusions:{ summary:"ED visits followed by an inpatient admission are excluded (captured in FUH instead).", items:["ED-to-inpatient admission same or next calendar day","Hospice","Members in long-term institutional care"] },
+    dataPitfalls:[
+      {title:"ED-to-Inpatient Linkage", detail:"If an ED visit is followed by an inpatient admission on the same or next calendar day, that ED event is excluded from FUM. The linkage must be implemented precisely — same-day or next-day admission triggers exclusion."},
+      {title:"Event-Level Measure", detail:"Measured per ED visit, not per member. Three qualifying ED visits from one member = three denominator events."},
+      {title:"Substance Use Alone Excluded", detail:"ED visits coded only with F10–F19 (substance use disorders) do not qualify. The principal diagnosis must come from the qualifying mental illness value set."}
+    ],
+    codeSets:[
+      {component:"Denominator – Mental Illness Diagnosis", description:"Principal ED diagnosis codes for mental illness", codeTypes:[{type:"ICD-10-CM", codes:["F20.9","F31.9","F32.9","F33.9","F41.1","F43.10","F60.3"], note:"Same value set as FUH; substance use (F10–F19) alone does not qualify"}]},
+      {component:"Numerator – Follow-Up Visit", description:"Mental health outpatient follow-up codes", codeTypes:[{type:"CPT", codes:["90791","90792","90832","90834","90837","90839","90840","90847","90853"], note:"Same CPT value set as FUH follow-up visits"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Follow-Up After Emergency Department Visit for Mental Illness (FUM)", url:"https://www.ncqa.org/hedis/measures/follow-up-after-emergency-department-visit-for-mental-illness/"}],
+    formulaNote:"Two rates (7-day and 30-day) — higher rate = better performance"
+  },
+  ADD: {
+    measureId:"ADD", measureName:"Follow-Up Care for Children Prescribed ADHD Medication", domain:"Effectiveness of Care / Child & Adolescent",
+    tags:["ADHD","Pediatric","Medication","Follow-Up"],
+    shortDescription:"Two rates for children 6–12 newly prescribed ADHD medication: initiation phase (follow-up within 30 days) and continuation phase (two or more additional visits in the following 9 months).",
+    denominator:{ summary:"Children 6–12 with a new ADHD medication prescription between March 1 and May 31 of the measurement year and no ADHD medication fill in the prior 120 days.", keyDetails:["Age 6–12 at first ADHD fill","New user: no ADHD medication in prior 120 days","First fill between March 1 and May 31","Continuous enrollment during measurement period"] },
+    numerator:{ summary:"Rate 1 (Initiation): one follow-up visit with a prescribing clinician within 30 days of the first ADHD fill. Rate 2 (Continuation): two or more follow-up visits in the 9 months after the initiation phase.", keyDetails:["Rate 1: one follow-up with prescriber within 30 days of first fill","Rate 2: two or more follow-up visits in months 1–9 after initiation","Follow-up can be with PCP or mental health practitioner"] },
+    exclusions:{ summary:"Children with any ADHD medication fill in the prior 120 days or who fail enrollment criteria.", items:["ADHD medication fill within 120 days before the intake period","Hospice","Gaps in continuous enrollment"] },
+    dataPitfalls:[
+      {title:"Narrow March–May Intake Window", detail:"The index fill must occur between March 1 and May 31 only. Prescriptions in other months do not create denominator eligibility for the current measurement year."},
+      {title:"120-Day New User Definition", detail:"Any ADHD medication fill in the 120 days before the index fill disqualifies the member. Ensure pharmacy data is complete across all plans/sources."},
+      {title:"Rate 2 Requires Rate 1", detail:"Rate 2's denominator equals Rate 1's numerator — only members who completed the initiation phase are eligible for the continuation rate. Query logic must reflect this cascading structure."}
+    ],
+    codeSets:[
+      {component:"Denominator – ADHD Medications", description:"ADHD medication drug classes (stimulants and non-stimulants)", codeTypes:[{type:"RxNorm / NDC", codes:["Methylphenidate","Amphetamine salts (Adderall)","Dextroamphetamine","Lisdexamfetamine (Vyvanse)","Atomoxetine (Strattera)","Guanfacine ER (Intuniv)","Clonidine ER (Kapvay)"], note:"Use NCQA ADHD Medications value set for full NDC list"}]},
+      {component:"Numerator – Follow-Up Visit", description:"Outpatient visit codes qualifying for follow-up", codeTypes:[{type:"CPT", codes:["99202","99203","99204","99205","99211","99212","99213","99214","99215","90791","90792","90832","90834","90837"], note:"E&M office visits (99202–99215) and psychiatric evaluation/therapy codes"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Follow-Up Care for Children Prescribed ADHD Medication (ADD)", url:"https://www.ncqa.org/hedis/measures/follow-up-care-for-children-prescribed-adhd-medication/"}],
+    formulaNote:"Two rates: Rate 1 (Initiation) and Rate 2 (Continuation) — higher rate = better performance"
+  },
+  SAA: {
+    measureId:"SAA", measureName:"Adherence to Antipsychotic Medications for Individuals with Schizophrenia", domain:"Effectiveness of Care / Behavioral Health",
+    tags:["Schizophrenia","Medication Adherence","Antipsychotic","PDC"],
+    shortDescription:"Percentage of members 18–64 with schizophrenia or schizoaffective disorder who achieved PDC ≥80% for antipsychotic medications during the measurement year.",
+    denominator:{ summary:"Members 18–64 with schizophrenia or schizoaffective disorder who had at least two antipsychotic medication fills in the measurement year and continuous enrollment.", keyDetails:["Age 18–64","Schizophrenia or schizoaffective disorder (two outpatient encounters or one inpatient)","At least two antipsychotic fills in the measurement year","Continuous enrollment"] },
+    numerator:{ summary:"Members who achieved PDC ≥80% for antipsychotic medications, combining all antipsychotic fills into a single days-covered calculation.", keyDetails:["PDC ≥80% across the measurement year","All antipsychotic fills combined for one PDC","Oral and LAI (long-acting injectable) formulations both qualify"] },
+    exclusions:{ summary:"Long-term nursing facility residents for the entire year and hospice members are excluded.", items:["Nursing facility resident for the entire measurement year","Hospice","No continuous enrollment"] },
+    dataPitfalls:[
+      {title:"LAI Days-Supply Logic", detail:"Long-acting injectables (e.g., Abilify Maintena, Risperdal Consta) have dosing intervals of 2–4 weeks. The days-supply must reflect the injection interval, not default to 30 days, or PDC will be distorted."},
+      {title:"Multiple Antipsychotics Combined", detail:"PDC is calculated across all antipsychotic fills, not per drug. Switching between medications mid-year or overlapping fills must use careful days-covered logic without double-counting."},
+      {title:"Two-Fill Minimum", detail:"Members must have at least two fills to enter the denominator. A single fill — even if it covers the entire year by days-supply — does not qualify."}
+    ],
+    codeSets:[
+      {component:"Denominator – Schizophrenia Diagnosis", description:"Schizophrenia and schizoaffective disorder ICD-10-CM codes", codeTypes:[{type:"ICD-10-CM", codes:["F20.0","F20.1","F20.2","F20.3","F20.5","F20.9","F25.0","F25.1","F25.9"], note:"F20.x = schizophrenia subtypes; F25.x = schizoaffective disorder (bipolar and depressive types)"}]},
+      {component:"Numerator – Antipsychotic Medications", description:"First- and second-generation antipsychotic drug classes", codeTypes:[{type:"RxNorm / NDC", codes:["Aripiprazole","Clozapine","Haloperidol","Olanzapine","Quetiapine","Risperidone","Ziprasidone","Lurasidone","Paliperidone","Brexpiprazole","Cariprazine"], note:"Use NCQA Antipsychotic Medications value set for complete NDC list"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Adherence to Antipsychotic Medications for Individuals with Schizophrenia (SAA)", url:"https://www.ncqa.org/hedis/measures/adherence-to-antipsychotic-medications-for-individuals-with-schizophrenia/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  AWC: {
+    measureId:"AWC", measureName:"Child and Adolescent Well-Care Visits", domain:"Effectiveness of Care / Child & Adolescent",
+    tags:["Well-Child","Preventive","Pediatric","Annual Visit"],
+    shortDescription:"Percentage of members age 3–21 who had at least one comprehensive well-care visit with a PCP or OB/GYN during the measurement year.",
+    denominator:{ summary:"Members age 3–21 continuously enrolled for the measurement year.", keyDetails:["Age 3–21 as of December 31","Continuous enrollment; max one gap of ≤45 days"] },
+    numerator:{ summary:"Members who had at least one comprehensive preventive exam (well-care visit) with a PCP or OB/GYN during the measurement year.", keyDetails:["At least one well-care/preventive exam in the measurement year","Must be a comprehensive preventive exam — not a sick visit","OB/GYN preventive visits qualify for adolescent females"] },
+    exclusions:{ summary:"Members who did not maintain continuous enrollment.", items:["Gaps in enrollment exceeding one 45-day gap","Hospice"] },
+    dataPitfalls:[
+      {title:"Preventive vs Sick Visit", detail:"Only comprehensive preventive visits (CPT 99381–99397 or Z00.x encounter codes) qualify. An E&M visit coded without a preventive exam CPT or Z00 diagnosis does not count."},
+      {title:"Age 21 Boundary", detail:"The cutoff is age 21 as of December 31. Members who turn 22 during the measurement year are excluded, even if the visit occurred before their birthday."},
+      {title:"OB/GYN Visits Qualify", detail:"Preventive OB/GYN exams count for adolescent females. The claim must be coded as a well-woman preventive exam, not just a gynecologic procedure."}
+    ],
+    codeSets:[
+      {component:"Numerator – Well-Care Visit", description:"Preventive exam CPT and diagnosis codes", codeTypes:[
+        {type:"CPT", codes:["99381","99382","99383","99384","99385","99391","99392","99393","99394","99395","99396","99397"], note:"New patient preventive (99381–99385), established patient preventive (99391–99397); age-appropriate subcodes vary"},
+        {type:"ICD-10-CM", codes:["Z00.00","Z00.01","Z00.121","Z00.129","Z00.5"], note:"General adult/child examination encounter codes; Z00.00 = without abnormal findings"}
+      ]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Child and Adolescent Well-Care Visits (AWC)", url:"https://www.ncqa.org/hedis/measures/child-and-adolescent-well-care-visits/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  W34: {
+    measureId:"W34", measureName:"Well-Child Visits in the First 30 Months of Life", domain:"Effectiveness of Care / Child & Adolescent",
+    tags:["Well-Child","Infant","Pediatric","Preventive"],
+    shortDescription:"Two rates: number of well-child visits in the first 15 months (≥6 required) and between 15 and 30 months (≥2 required).",
+    denominator:{ summary:"Rate 1: children turning 15 months during the measurement year. Rate 2: children turning 30 months during the measurement year.", keyDetails:["Rate 1: children whose 15-month birthday falls in the measurement year","Rate 2: children whose 30-month birthday falls in the measurement year","Continuous enrollment required"] },
+    numerator:{ summary:"Rate 1: 6 or more well-child visits in the first 15 months of life. Rate 2: 2 or more well-child visits between 15 and 30 months of age.", keyDetails:["Rate 1: ≥6 qualifying visits before 15 months of age","Rate 2: ≥2 qualifying visits between 15 and 30 months","Visits must be billed as preventive/well-child encounters"] },
+    exclusions:{ summary:"Standard enrollment exclusions.", items:["Gaps in continuous enrollment","Hospice"] },
+    dataPitfalls:[
+      {title:"Exact Visit Count Required", detail:"The numerator threshold is 6 visits (Rate 1) or 2 visits (Rate 2) — not just 'any visit.' Claims must be counted per distinct date of service."},
+      {title:"DOB-Based Date Arithmetic", detail:"Visit windows are anchored to the child's date of birth, not the calendar year. Precise DOB-based logic is required — a single day off can shift a visit into or out of the window."}
+    ],
+    codeSets:[
+      {component:"Numerator – Well-Child Visit", description:"Infant and toddler preventive visit codes", codeTypes:[
+        {type:"CPT", codes:["99381","99382","99391","99392"], note:"99381/99391 for under age 1; 99382/99392 for ages 1–4"},
+        {type:"ICD-10-CM", codes:["Z00.110","Z00.111","Z00.121","Z00.129"], note:"Health supervision of infant and toddler encounter codes"}
+      ]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Well-Child Visits in the First 30 Months of Life (W34)", url:"https://www.ncqa.org/hedis/measures/well-child-visits-in-the-first-30-months-of-life/"}],
+    formulaNote:"Two rates — higher count of qualifying visits = better performance"
+  },
+  IMA: {
+    measureId:"IMA", measureName:"Immunizations for Adolescents", domain:"Effectiveness of Care / Child & Adolescent",
+    tags:["Immunization","Adolescent","Preventive","Vaccine"],
+    shortDescription:"Percentage of adolescents turning 13 during the measurement year who received recommended vaccines: meningococcal, Tdap, and HPV (plus a combination rate requiring all three).",
+    denominator:{ summary:"Members who turned 13 during the measurement year with continuous enrollment.", keyDetails:["Turned 13 during the measurement year","Continuous enrollment during measurement year"] },
+    numerator:{ summary:"Three indicator rates: meningococcal vaccine, Tdap booster, and ≥1 HPV dose — each by 13th birthday or during measurement year. Combination rate requires all three.", keyDetails:["MCV4: one dose by age 13 or in measurement year","Tdap: one dose by age 13 or in measurement year","HPV: at least one dose by age 13 or in measurement year","Combination rate: all three vaccines satisfied"] },
+    exclusions:{ summary:"Members with documented contraindications per indicator.", items:["Anaphylaxis to vaccine components (per indicator)","Hospice"] },
+    dataPitfalls:[
+      {title:"Combination Rate Requires All Three", detail:"A member missing any single vaccine fails the combination rate even if two of three are satisfied. The combination rate denominator and numerator must be evaluated jointly."},
+      {title:"Historical Immunization Data Required", detail:"Vaccines administered at ages 11–12 still count. Historical immunization registry data must be incorporated; claims alone will miss vaccines given before age 13."},
+      {title:"HPV: One Dose Sufficient for HEDIS", detail:"HEDIS only requires ≥1 HPV dose for the numerator — not the full 2- or 3-dose series. Analysts applying the clinical guideline series requirement will incorrectly reduce the numerator."}
+    ],
+    codeSets:[
+      {component:"Numerator – Meningococcal (MCV4)", description:"Meningococcal conjugate vaccine codes", codeTypes:[{type:"CPT", codes:["90734","90619"], note:"MCV4 vaccine codes"},{type:"CVX", codes:["108","147","148","136"], note:"CVX codes for meningococcal vaccines"}]},
+      {component:"Numerator – Tdap", description:"Tetanus, diphtheria, pertussis booster", codeTypes:[{type:"CPT", codes:["90715"], note:"Tdap vaccine"},{type:"CVX", codes:["115"], note:"Tdap CVX code"}]},
+      {component:"Numerator – HPV Vaccine", description:"Human papillomavirus vaccine codes", codeTypes:[{type:"CPT", codes:["90650","90651"], note:"HPV bivalent (90650), HPV nonavalent (90651 — Gardasil 9)"},{type:"CVX", codes:["62","165"], note:"HPV4 (62), HPV9 (165)"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Immunizations for Adolescents (IMA)", url:"https://www.ncqa.org/hedis/measures/immunizations-for-adolescents/"}],
+    formulaNote:"Numerator / Denominator × 100 per indicator and combination rate — higher = better"
+  },
+  CHL: {
+    measureId:"CHL", measureName:"Chlamydia Screening in Women", domain:"Effectiveness of Care / Women's Health",
+    tags:["STI Screening","Chlamydia","Women","Young Adult"],
+    shortDescription:"Percentage of sexually active women age 16–24 who had at least one chlamydia test during the measurement year.",
+    denominator:{ summary:"Women 16–24 identified as sexually active (via pregnancy, contraceptive, or STI-related services) with continuous enrollment.", keyDetails:["Women only; age 16–24","Evidence of sexual activity via proxy claims (contraceptive fills, pregnancy, STI-related services)","Continuous enrollment"] },
+    numerator:{ summary:"Women with at least one chlamydia test (any specimen type) during the measurement year.", keyDetails:["At least one chlamydia test in the measurement year","NAAT, culture, or antigen test qualify","Urine, cervical, and vaginal specimens all acceptable"] },
+    exclusions:{ summary:"Women with no evidence of sexual activity or with hysterectomy are excluded.", items:["No proxy evidence of sexual activity in the measurement year","Hospice"] },
+    dataPitfalls:[
+      {title:"Sexual Activity Identified by Proxy", detail:"The denominator relies on proxy claims — contraceptive fills, OB visits, STI diagnoses — to identify sexually active women. Missing these claims causes denominator undercounting."},
+      {title:"Specimen Type Agnostic", detail:"Tests from urine, cervical, vaginal, or other specimens all qualify. Do not restrict your code list to cervical specimens only, or you will miss self-collected NAAT tests."}
+    ],
+    codeSets:[
+      {component:"Numerator – Chlamydia Test", description:"Chlamydia NAAT and culture procedure codes", codeTypes:[
+        {type:"CPT", codes:["87110","87270","87320","87490","87491","87492"], note:"Culture (87110), antigen (87320), NAAT (87490–87492)"},
+        {type:"LOINC", codes:["14461-8","21613-5","36902-5","42931-6"], note:"Chlamydia trachomatis NAAT panel LOINC codes"}
+      ]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Chlamydia Screening in Women (CHL)", url:"https://www.ncqa.org/hedis/measures/chlamydia-screening-in-women/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  MRP: {
+    measureId:"MRP", measureName:"Medication Reconciliation Post-Discharge", domain:"Effectiveness of Care / Patient Safety",
+    tags:["Medication Reconciliation","Transitions of Care","Discharge","Patient Safety"],
+    shortDescription:"Percentage of inpatient discharges (members 18+) where medication reconciliation was performed by a qualified clinician within 30 days of discharge.",
+    denominator:{ summary:"Inpatient discharges (acute and nonacute) for members 18+ discharged alive, with continuous enrollment 30 days post-discharge.", keyDetails:["Age 18+ at discharge","Acute or nonacute inpatient discharge","Discharged alive","Continuous enrollment 30 days post-discharge","Event-level: multiple discharges = multiple events"] },
+    numerator:{ summary:"Discharges where medication reconciliation was documented within 30 days, performed by a prescribing practitioner, clinical pharmacist, or RN.", keyDetails:["Medication reconciliation within 30 days of discharge","Performed by prescribing practitioner, clinical pharmacist, or RN","Can occur in outpatient or telehealth setting"] },
+    exclusions:{ summary:"Discharges to SNF/LTC where member remains for ≥30 days, deaths, and hospice are excluded.", items:["Discharge to SNF or long-term care with stay ≥30 days","Death within 30 days of discharge","Hospice"] },
+    dataPitfalls:[
+      {title:"Event-Level Measure", detail:"Like FUH, this is per discharge. A member hospitalized twice = two denominator events. Member-level deduplication will undercount."},
+      {title:"CPT 1111F Is Key", detail:"NCQA accepts Category II code 1111F (medication list documented and reviewed) as evidence of reconciliation. Many orgs bill this alongside an E&M visit. Confirm it flows through your claims feed."},
+      {title:"Nonacute Stays Count", detail:"Discharges from SNFs, rehabilitation facilities, and LTACHs enter the denominator. Analysts who query only acute inpatient claim types will miss a significant portion of denominator events."},
+      {title:"Documentation Must Be Billed", detail:"Medication reconciliation must be separately documented/billed. A post-discharge office visit alone does not satisfy the numerator unless a reconciliation code is attached."}
+    ],
+    codeSets:[
+      {component:"Numerator – Medication Reconciliation", description:"Billing codes indicating medication reconciliation was performed", codeTypes:[
+        {type:"CPT", codes:["1111F"], note:"Category II code: medication list documented and reviewed post-discharge"},
+        {type:"CPT", codes:["99495","99496"], note:"Transitional care management: moderate complexity (99495) and high complexity (99496); include reconciliation as part of TCM"}
+      ]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Medication Reconciliation Post-Discharge (MRP)", url:"https://www.ncqa.org/hedis/measures/medication-reconciliation-post-discharge/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  MAD: {
+    measureId:"MAD", measureName:"Medication Adherence for Diabetes Medications", domain:"Effectiveness of Care / Medication Management",
+    tags:["Diabetes","Medication Adherence","PDC","Pharmacy"],
+    shortDescription:"Percentage of members 18–75 with diabetes who achieved PDC ≥80% for non-insulin diabetes medications during the measurement year.",
+    denominator:{ summary:"Members 18–75 with type 1 or type 2 diabetes who had at least two non-insulin diabetes medication fills in the measurement year and continuous enrollment.", keyDetails:["Age 18–75","Type 1 or Type 2 diabetes diagnosis","At least two qualifying medication fills in the measurement year","Continuous enrollment"] },
+    numerator:{ summary:"Members with PDC ≥80% for non-insulin diabetes medications (biguanides, sulfonylureas, DPP-4 inhibitors, GLP-1 agonists, SGLT2 inhibitors, etc.) across the measurement year.", keyDetails:["PDC ≥80% across all qualifying fills combined","Multiple drug classes pooled into one PDC","Full calendar year measurement window"] },
+    exclusions:{ summary:"Gestational/steroid-induced diabetes only, ESRD, hospice.", items:["Gestational or steroid-induced diabetes only","ESRD","Hospice"] },
+    dataPitfalls:[
+      {title:"Insulin Excluded", detail:"Insulin is NOT included in the MAD medication list. Only non-insulin agents count. Members on insulin-only regimens may not have qualifying fills and could fall out of the denominator entirely."},
+      {title:"PDC Calculation", detail:"PDC = days covered / measurement window (365 days). Gaps between refills reduce PDC. Early refills are capped at the end of the year and do not extend coverage beyond December 31."},
+      {title:"Multi-Class Pooling", detail:"Members on two diabetes drug classes have all fills pooled into one PDC — there is no per-drug or per-class separate rate."}
+    ],
+    codeSets:[
+      {component:"Numerator – Diabetes Medications (non-insulin)", description:"Oral and injectable non-insulin diabetes drug classes", codeTypes:[{type:"RxNorm / NDC", codes:["Metformin","Glipizide","Glyburide","Glimepiride","Sitagliptin","Saxagliptin","Alogliptin","Empagliflozin","Dapagliflozin","Canagliflozin","Semaglutide","Liraglutide","Dulaglutide","Pioglitazone"], note:"Use NCQA Diabetes Medications value set for full NDC list; insulin excluded from this measure"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Medication Adherence for Diabetes Medications (MAD)", url:"https://www.ncqa.org/hedis/measures/medication-adherence-for-diabetes-medications/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  MAS: {
+    measureId:"MAS", measureName:"Medication Adherence for Cholesterol (Statins)", domain:"Effectiveness of Care / Medication Management",
+    tags:["Cholesterol","Statin","Medication Adherence","PDC"],
+    shortDescription:"Percentage of members 21–75 on a statin who achieved PDC ≥80% during the measurement year.",
+    denominator:{ summary:"Members 21–75 who had at least two statin fills in the measurement year and continuous enrollment.", keyDetails:["Age 21–75","At least two statin fills in the measurement year","Continuous enrollment"] },
+    numerator:{ summary:"Members with PDC ≥80% for statin medications across the measurement year, with all statin fills combined into a single PDC.", keyDetails:["PDC ≥80% for all statin fills combined","Full calendar year window","Multiple statin agents treated as one class"] },
+    exclusions:{ summary:"Hospice and disenrollment during the measurement year.", items:["Hospice","Disenrollment during measurement year"] },
+    dataPitfalls:[
+      {title:"Statin Switching Mid-Year", detail:"When a member switches statin brands or doses, both fills contribute to a single pooled PDC. Do not calculate separate PDC per drug — treat all statins as one therapeutic class."},
+      {title:"Days-Supply Accuracy", detail:"PDC depends entirely on accurate days-supply values from pharmacy claims. A 30-tablet prescription entered with a 90-day supply will significantly overstate coverage."}
+    ],
+    codeSets:[
+      {component:"Numerator – Statin Medications", description:"HMG-CoA reductase inhibitor (statin) drug classes", codeTypes:[{type:"RxNorm / NDC", codes:["Atorvastatin","Rosuvastatin","Simvastatin","Pravastatin","Lovastatin","Fluvastatin","Pitavastatin"], note:"Use NCQA Statin Medications value set for complete NDC list"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Medication Adherence for Cholesterol (Statins) (MAS)", url:"https://www.ncqa.org/hedis/measures/medication-adherence-for-cholesterol-statins/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  MAP: {
+    measureId:"MAP", measureName:"Medication Adherence for Hypertension (RAS Antagonists)", domain:"Effectiveness of Care / Medication Management",
+    tags:["Hypertension","RAS Antagonist","ACE/ARB","PDC"],
+    shortDescription:"Percentage of members 18–85 with hypertension on a RAS antagonist (ACE inhibitor or ARB) who achieved PDC ≥80% during the measurement year.",
+    denominator:{ summary:"Members 18–85 with hypertension who had at least two RAS antagonist fills in the measurement year and continuous enrollment.", keyDetails:["Age 18–85","Hypertension diagnosis (I10)","At least two RAS antagonist fills","Continuous enrollment"] },
+    numerator:{ summary:"Members with PDC ≥80% for RAS antagonist medications, combining ACE inhibitor and ARB fills into one PDC.", keyDetails:["PDC ≥80% for ACE inhibitors and/or ARBs combined","Multiple agents treated as one class","Full measurement year window"] },
+    exclusions:{ summary:"ESRD, hospice, and disenrollment.", items:["ESRD","Hospice","Disenrollment during measurement year"] },
+    dataPitfalls:[
+      {title:"ACE + ARB Combined", detail:"ACE inhibitors and ARBs are one therapeutic class for PDC purposes. A member switching between them mid-year should have both fills pooled — no separate per-drug PDC."},
+      {title:"Angioedema Switching", detail:"Members switched from ACE inhibitors to ARBs due to angioedema should have the switch captured in both drug classes, ensuring continuity of coverage days."}
+    ],
+    codeSets:[
+      {component:"Numerator – RAS Antagonist Medications", description:"ACE inhibitors and ARBs", codeTypes:[{type:"RxNorm / NDC", codes:["Lisinopril","Enalapril","Ramipril","Benazepril","Captopril","Losartan","Valsartan","Olmesartan","Irbesartan","Telmisartan","Amlodipine/benazepril (combo)"], note:"Use NCQA RAS Antagonist Medications value set for complete NDC list; includes single-agent and combination pills"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Medication Adherence for Hypertension (RAS Antagonists) (MAP)", url:"https://www.ncqa.org/hedis/measures/medication-adherence-for-hypertension-ras-antagonists/"}],
+    formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
+  },
+  PPC: {
+    measureId:"PPC", measureName:"Prenatal and Postpartum Care", domain:"Effectiveness of Care / Women's Health",
+    tags:["Prenatal","Postpartum","Maternity","Women"],
+    shortDescription:"Two rates for women who delivered a live birth: prenatal care in the first trimester (or within 42 days of enrollment), and a postpartum visit between days 7 and 84 post-delivery.",
+    denominator:{ summary:"Women 8–64 who had a live birth during the measurement year, identified by delivery codes on an inpatient claim.", keyDetails:["Women 8–64 with a live birth in the measurement year","Delivery identified by ICD-10-CM Z37.x or CPT delivery codes on inpatient claim","Continuous enrollment for the applicable measurement period per rate"] },
+    numerator:{ summary:"Rate 1: prenatal care visit on or before the 84th day of pregnancy (first trimester). Rate 2: postpartum visit between day 7 and day 84 post-delivery.", keyDetails:["Rate 1: prenatal visit by 84th gestational day","Rate 2: postpartum visit between days 7 and 84 post-delivery","Visits with OB, midwife, or PCP with appropriate codes qualify"] },
+    exclusions:{ summary:"Gaps in enrollment during the measurement period exclude members per rate.", items:["Enrollment gaps during applicable period","Hospice"] },
+    dataPitfalls:[
+      {title:"Delivery Date Is the Anchor", detail:"Both rates are anchored to the delivery date from the inpatient claim. A missing or miscoded delivery claim breaks both rates entirely. Validate delivery claim capture before running either rate."},
+      {title:"Postpartum Window is Days 7–84", detail:"The postpartum window starts on day 7 (not day 1). A visit on day 6 or day 85 does not qualify. Date range logic must be exact."},
+      {title:"First Trimester Backward Date Math", detail:"First trimester is approximated as 280 days before delivery. The 84-day window starts from estimated conception, requiring backward date arithmetic from the delivery date."}
+    ],
+    codeSets:[
+      {component:"Denominator – Live Birth Delivery", description:"Delivery procedure and outcome of delivery codes", codeTypes:[
+        {type:"ICD-10-CM", codes:["Z37.0","Z37.1","Z37.2","Z37.3","Z37.4","Z37.50","Z37.59","Z37.60","Z37.7","Z37.9"], note:"Outcome of delivery (Z37.x); Z37.0 = single liveborn is most common"},
+        {type:"CPT", codes:["59400","59409","59410","59510","59514","59515","59610","59614","59618","59620","59622"], note:"Vaginal and C-section delivery codes with and without antepartum care"}
+      ]},
+      {component:"Numerator – Prenatal Visit", description:"Prenatal care visit codes", codeTypes:[{type:"CPT", codes:["59425","59426","0501F","0502F","0503F"], note:"Antepartum care (59425/59426), Category II prenatal visit codes (0501F–0503F)"}]},
+      {component:"Numerator – Postpartum Visit", description:"Postpartum care visit codes", codeTypes:[{type:"CPT", codes:["59430","99501","0503F"], note:"Postpartum care (59430), home visit (99501)"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Prenatal and Postpartum Care (PPC)", url:"https://www.ncqa.org/hedis/measures/prenatal-and-postpartum-care/"}],
+    formulaNote:"Two rates — higher rate = better performance for both"
+  },
+  PCR: {
+    measureId:"PCR", measureName:"Plan All-Cause Readmissions", domain:"Utilization and Risk Adjusted Utilization",
+    tags:["Readmissions","Utilization","Risk Adjusted","Adult"],
+    shortDescription:"Risk-adjusted ratio of observed to expected 30-day all-cause acute inpatient readmissions for members 18–64. Reported as a ratio, not a percentage.",
+    denominator:{ summary:"Acute inpatient discharges for members 18–64 discharged alive, excluding planned readmissions and obstetric/mental health index stays.", keyDetails:["Age 18–64","Acute inpatient discharge (discharged alive)","Excludes planned readmissions, obstetric, and mental health/SUD index stays","Continuous enrollment 30 days post-discharge"] },
+    numerator:{ summary:"Index discharges followed by an unplanned acute inpatient readmission within 30 days.", keyDetails:["Unplanned readmission within 30 days of index discharge","Readmission must be acute inpatient","Planned readmissions excluded per NCQA algorithm"] },
+    exclusions:{ summary:"Planned readmissions, obstetric stays, mental health index stays, hospice, and deaths are excluded as index events.", items:["Planned readmission as the subsequent admission (per NCQA planned readmission algorithm)","Obstetric inpatient discharges","Mental health and SUD principal diagnosis as index event","Discharge to hospice","Death within 30 days"] },
+    dataPitfalls:[
+      {title:"Planned Readmission Algorithm", detail:"NCQA provides a specific algorithm to identify planned readmissions (elective surgery, scheduled chemotherapy, etc.). This is complex multi-step logic — it cannot be simplified to 'elective = planned.'"},
+      {title:"Risk Adjustment Required", detail:"PCR is an observed/expected ratio, not a raw rate. The expected readmissions are risk-adjusted for age, sex, and diagnosis. Without risk adjustment, comparing plans is not meaningful."},
+      {title:"Mental Health Asymmetry", detail:"Mental health and SUD stays are excluded as INDEX events but CAN qualify as readmissions. This asymmetry is a frequent query error — mental health admissions may still count as the return event."}
+    ],
+    codeSets:[
+      {component:"Denominator – Acute Inpatient Stay", description:"Acute inpatient claim type identification", codeTypes:[{type:"UB-04 Bill Type", codes:["11X","12X"], note:"Hospital inpatient (11X) and hospital inpatient Part B (12X) — used to identify acute inpatient claims"}]},
+      {component:"Exclusion – Mental Health Index Stays", description:"Mental/behavioral health principal diagnoses excluded as index events", codeTypes:[{type:"ICD-10-CM", codes:["F01–F99 (chapter range)"], note:"Mental, behavioral, and neurodevelopmental disorder chapter excluded as index but NOT excluded as readmission events"}]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Plan All-Cause Readmissions (PCR), Utilization chapter", url:"https://www.ncqa.org/hedis/measures/plan-all-cause-readmissions/"}],
+    formulaNote:"Observed readmissions / Expected readmissions — ratio <1.0 = better than expected performance"
+  },
+  AIS: {
+    measureId:"AIS", measureName:"Adult Immunization Status", domain:"Effectiveness of Care / Adult",
+    tags:["Immunization","Preventive","Adult","Vaccine"],
+    shortDescription:"Percentage of members 19+ who are up-to-date on recommended adult vaccines: influenza (annual), Td/Tdap (10-year), zoster (age 50+), and pneumococcal (age 66+), plus a combination rate.",
+    denominator:{ summary:"Members 19+ continuously enrolled for the measurement year.", keyDetails:["Age 19+ as of December 31","Continuous enrollment"] },
+    numerator:{ summary:"Four indicator rates: influenza (one dose in measurement year), Td/Tdap (one dose in last 10 years), zoster (one or two doses for age 50+), pneumococcal (one or more doses for age 66+). Combination rate requires all age-appropriate vaccines.", keyDetails:["Influenza: one dose in the measurement year","Td or Tdap: one dose in last 10 years","Zoster: ≥1 dose (Zostavax) or 2 doses (Shingrix) for age 50+","Pneumococcal: ≥1 dose for age 66+"] },
+    exclusions:{ summary:"Members with contraindications to specific vaccines are excluded per indicator.", items:["Documented anaphylaxis to vaccine components","Immunocompromised status for live vaccines (zoster)","Hospice"] },
+    dataPitfalls:[
+      {title:"Different Look-Back Per Vaccine", detail:"Each vaccine has a distinct look-back: flu = 1 year, Td/Tdap = 10 years, zoster/pneumococcal are age-gated. Each indicator requires its own date range logic."},
+      {title:"Shingrix vs Zostavax Dose Count", detail:"Shingrix (recombinant zoster) requires two doses for the numerator. Zostavax (live) requires one. If your code set doesn't distinguish them or handle dose counts, you will over- or under-count."},
+      {title:"Immunization Registry Data Critical", detail:"Vaccines are often not captured in claims — especially those given at pharmacies or public health clinics. State immunization registry data is frequently needed to accurately measure this indicator."}
+    ],
+    codeSets:[
+      {component:"Numerator – Influenza Vaccine", description:"Seasonal influenza vaccine CPT and CVX codes", codeTypes:[
+        {type:"CPT", codes:["90655","90656","90657","90658","90661","90662","90672","90673","90686","90687","90688","90756"], note:"Trivalent and quadrivalent influenza vaccines (multiple formulations); partial list"},
+        {type:"CVX", codes:["135","140","141","144","149","150","155","158","161","166"], note:"CVX codes for influenza vaccine formulations"}
+      ]},
+      {component:"Numerator – Zoster Vaccine", description:"Herpes zoster vaccine codes", codeTypes:[
+        {type:"CPT", codes:["90736","90750"], note:"Live zoster (Zostavax, 90736 — 1 dose); recombinant zoster (Shingrix, 90750 — 2 doses required)"},
+        {type:"CVX", codes:["121","187"], note:"Live zoster (121), recombinant zoster (187)"}
+      ]},
+      {component:"Numerator – Pneumococcal Vaccine", description:"Pneumococcal vaccine codes", codeTypes:[
+        {type:"CPT", codes:["90670","90732","90671"], note:"PCV13 (90670), PPSV23 (90732), PCV15/20 (90671)"},
+        {type:"CVX", codes:["133","109","152"], note:"PCV13 (133), PPSV23 (109), PCV15 (152)"}
+      ]}
+    ],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Adult Immunization Status (AIS)", url:"https://www.ncqa.org/hedis/measures/adult-immunization-status/"}],
+    formulaNote:"Numerator / Denominator × 100 per indicator and combination rate — higher = better"
+  }
+};
+
+const measureSelect  = document.getElementById('measureSelect');
+const errorEl        = document.getElementById('errorState');
+const resultsCard    = document.getElementById('resultsCard');
+const resultsContent = document.getElementById('resultsContent');
+const emptyState     = document.getElementById('emptyState');
+
+measureSelect.addEventListener('change', () => { if (measureSelect.value) showMeasure(); });
+
+function showMeasure() {
+  const key = measureSelect.value;
+  if (!key) return;
+  const m = MEASURES[key];
+  if (!m) {
+    errorEl.textContent = 'Measure data not found. Please try another selection.';
+    errorEl.classList.add('visible');
+    resultsCard.classList.remove('visible');
+    emptyState.style.display = 'none';
+    return;
+  }
+  errorEl.classList.remove('visible');
+  emptyState.style.display = 'none';
+  renderResults(m);
+  resultsCard.classList.add('visible');
+  resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderCodeSets(sets) {
+  if (!sets||!sets.length) return '';
+  return sets.map(cs => {
+    const types = (cs.codeTypes||[]).map(ct => {
+      const chips = (ct.codes||[]).map(c => '<span class="code-chip">'+esc(c)+'</span>').join('');
+      return '<div class="code-type-block"><span class="code-type-label">'+esc(ct.type)+'</span><div class="code-chips">'+chips+'</div>'+(ct.note?'<div class="code-note">'+esc(ct.note)+'</div>':'')+'</div>';
+    }).join('');
+    return '<div class="codeset-block"><div class="codeset-component">'+esc(cs.component)+'</div><div class="codeset-desc">'+esc(cs.description)+'</div>'+types+'</div>';
+  }).join('');
+}
+
+function renderCitations(cites) {
+  if (!cites||!cites.length) return '';
+  return cites.map(c => {
+    const link = c.url ? '<div><a class="citation-url" href="'+esc(c.url)+'" target="_blank" rel="noopener">'+esc(c.url)+'</a></div>' : '';
+    return '<div class="citation-item"><div class="citation-source">'+esc(c.source)+'</div><div class="citation-detail">'+esc(c.detail)+'</div>'+link+'</div>';
+  }).join('');
+}
+
+function renderResults(m) {
+  const tags      = (m.tags||[]).map(t=>'<span class="measure-tag">'+esc(t)+'</span>').join('');
+  const denomDets = (m.denominator?.keyDetails||[]).map(d=>'<li>'+esc(d)+'</li>').join('');
+  const numerDets = (m.numerator?.keyDetails||[]).map(d=>'<li>'+esc(d)+'</li>').join('');
+  const exclItems = (m.exclusions?.items||[]).map(d=>'<li>'+esc(d)+'</li>').join('');
+  const pitfalls  = (m.dataPitfalls||[]).map(p=>'<div class="pitfall-item"><span class="pitfall-bullet">⚑</span><div><strong>'+esc(p.title)+':</strong> '+esc(p.detail)+'</div></div>').join('');
+  const codeHtml  = renderCodeSets(m.codeSets);
+  const citeHtml  = renderCitations(m.citations);
+
+  resultsContent.innerHTML =
+    '<div class="card-header"><div>'
+    +'<div class="measure-id">'+esc(m.measureId)+' · '+esc(m.domain)+'</div>'
+    +'<div class="measure-name">'+esc(m.measureName)+'</div>'
+    +'<div class="measure-desc">'+esc(m.shortDescription)+'</div>'
+    +'</div><div class="measure-tags">'+tags+'</div></div>'
+    +'<div class="sections-grid">'
+    +'<div class="section"><div class="section-header"><div class="section-icon icon-denom">🧮</div><span class="section-title">Denominator</span></div><div class="section-body"><p>'+esc(m.denominator?.summary)+'</p>'+(denomDets?'<ul>'+denomDets+'</ul>':'')+'</div></div>'
+    +'<div class="section"><div class="section-header"><div class="section-icon icon-numer">✓</div><span class="section-title">Numerator</span></div><div class="section-body"><p>'+esc(m.numerator?.summary)+'</p>'+(numerDets?'<ul>'+numerDets+'</ul>':'')+'</div></div>'
+    +'<div class="section"><div class="section-header"><div class="section-icon icon-excl">⊘</div><span class="section-title">Exclusions</span></div><div class="section-body"><p>'+esc(m.exclusions?.summary)+'</p>'+(exclItems?'<ul>'+exclItems+'</ul>':'')+'</div></div>'
+    +'<div class="section"><div class="section-header"><div class="section-icon icon-pitfall">⚑</div><span class="section-title">Data &amp; Coding Pitfalls</span></div><div class="section-body">'+(pitfalls||'<p>No pitfalls documented.</p>')+'</div></div>'
+    +'</div>'
+    +(codeHtml?'<div class="codesets-section"><div class="section-header" style="padding:18px 28px 4px"><div class="section-icon" style="background:#f0eaf8">🗂</div><span class="section-title">Code Sets</span></div><div class="codesets-body">'+codeHtml+'</div></div>':'')
+    +(citeHtml?'<div class="citations-section"><div class="section-header" style="padding:18px 28px 4px"><div class="section-icon" style="background:#eaf0f8">📄</div><span class="section-title">Sources &amp; Citations</span></div><div class="citations-body">'+citeHtml+'</div></div>':'')
+    +(m.formulaNote?'<div class="formula-row"><span class="formula-label">Rate</span><span class="formula-text">'+esc(m.formulaNote)+'</span></div>':'');
+}
+</script>
+</body>
+</html>
