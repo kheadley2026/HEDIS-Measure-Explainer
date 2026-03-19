@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HEDIS Measure Explainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ee;
+    --paper: #fffdf9;
+    --ink: #1a1714;
+    --ink-mid: #4a4540;
+    --ink-light: #8a8480;
+    --rule: #d8d4ce;
+    --accent: #2a6049;
+    --accent-light: #e8f0ec;
+    --accent-warm: #c84b2a;
+    --tag-bg: #eae6e0;
+    --shadow: 0 2px 12px rgba(26,23,20,0.08), 0 1px 3px rgba(26,23,20,0.05);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* Header */
+  header {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    border-bottom: 3px solid var(--accent);
+  }
+
+  .header-logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .header-sub {
+    font-size: 12px;
+    color: rgba(245,242,238,0.5);
+    font-weight: 300;
+    margin-left: auto;
+    white-space: nowrap;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Main layout */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 24px 0;
+  }
+
+  /* Search bar */
+  .search-section {
+    margin-bottom: 36px;
+  }
+
+  .search-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .measure-select {
+    flex: 1;
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    border-radius: 4px;
+    padding: 13px 18px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8480' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+
+  .measure-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(42,96,73,0.12);
+  }
+
+  .measure-select option { color: var(--ink); }
+  .measure-select optgroup { color: var(--ink-light); font-style: normal; }
+
+  .search-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 14px 26px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .search-btn:hover { background: #1e4d38; }
+  .search-btn:active { transform: scale(0.98); }
+  .search-btn:disabled { background: var(--ink-light); cursor: not-allowed; }
+
+  /* Loading */
+  .loading-state {
+    display: none;
+    align-items: center;
+    gap: 14px;
+    padding: 32px 28px;
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    color: var(--ink-mid);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  .loading-state.visible { display: flex; }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--rule);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error */
+  .error-state {
+    display: none;
+    padding: 20px 24px;
+    background: #fff5f3;
+    border: 1.5px solid #f0c4b8;
+    border-radius: 6px;
+    color: var(--accent-warm);
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .error-state.visible { display: block; }
+
+  /* Results card */
+  .results-card {
+    display: none;
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .results-card.visible { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Card header */
+  .card-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1.5px solid var(--rule);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .measure-id {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .measure-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .measure-desc {
+    font-size: 13px;
+    color: var(--ink-mid);
+    font-weight: 300;
+    margin-top: 6px;
+    line-height: 1.5;
+    max-width: 600px;
+  }
+
+  .measure-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+
+  .measure-tag {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid rgba(42,96,73,0.2);
+    border-radius: 3px;
+    padding: 3px 9px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Sections grid */
+  .sections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .section {
+    padding: 22px 28px;
+    border-right: 1.5px solid var(--rule);
+    border-bottom: 1.5px solid var(--rule);
+  }
+
+  .section:nth-child(even) { border-right: none; }
+  .section:nth-last-child(-n+2) { border-bottom: none; }
+
+  /* For odd number of sections, handle the last one spanning */
+  .section.full-width {
+    grid-column: 1 / -1;
+    border-right: none;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .section-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .icon-denom { background: #e8f0ec; }
+  .icon-numer { background: #e8f3ff; }
+  .icon-excl  { background: #fff3e8; }
+  .icon-pitfall { background: #fff0f0; }
+
+  .section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+  }
+
+  .section-body {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--ink-mid);
+    font-weight: 300;
+  }
+
+  .section-body ul {
+    padding-left: 18px;
+    margin-top: 4px;
+  }
+
+  .section-body li {
+    margin-bottom: 5px;
+  }
+
+  .section-body strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .section-body .highlight {
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+
+  .section-body .warn {
+    background: #fff3e0;
+    color: #b85c00;
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+
+  /* Pitfalls special styling */
+  .pitfall-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background: #fffaf8;
+    border-left: 3px solid var(--accent-warm);
+    border-radius: 0 3px 3px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-mid);
+  }
+
+  .pitfall-bullet {
+    color: var(--accent-warm);
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Formula row */
+  .formula-row {
+    padding: 14px 28px;
+    background: var(--accent-light);
+    border-top: 1.5px solid rgba(42,96,73,0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .formula-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .formula-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--ink-light);
+  }
+
+  .empty-icon {
+    font-size: 36px;
+    margin-bottom: 14px;
+    opacity: 0.4;
+  }
+
+  .empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--ink-mid);
+    margin-bottom: 8px;
+    opacity: 0.6;
+  }
+
+  .empty-sub {
+    font-size: 13px;
+    font-weight: 300;
+    opacity: 0.7;
+  }
+
+  /* Code sets */
+  .codesets-section {
+    border-top: 1.5px solid var(--rule);
+    padding-bottom: 8px;
+  }
+
+  .codesets-body {
+    padding: 12px 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .codeset-block {
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+
+  .codeset-component {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .codeset-desc {
+    font-size: 12.5px;
+    color: var(--ink-mid);
+    font-weight: 300;
+    margin-bottom: 10px;
+  }
+
+  .code-type-block {
+    margin-bottom: 10px;
+  }
+
+  .code-type-block:last-child { margin-bottom: 0; }
+
+  .code-type-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .code-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+
+  .code-chip {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.03em;
+  }
+
+  .code-note {
+    font-size: 11.5px;
+    color: var(--ink-light);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  /* Citations */
+  .citations-section {
+    border-top: 1.5px solid var(--rule);
+    padding-bottom: 8px;
+  }
+
+  .citations-body {
+    padding: 12px 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .citation-item {
+    font-size: 12.5px;
+    line-height: 1.5;
+    padding: 10px 14px;
+    background: var(--bg);
+    border-left: 3px solid var(--rule);
+    border-radius: 0 3px 3px 0;
+  }
+
+  .citation-source {
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .citation-detail {
+    color: var(--ink-mid);
+    font-weight: 300;
+    margin-bottom: 3px;
+  }
+
+  .citation-url {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    word-break: break-all;
+  }
+
+  .citation-url:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    .codesets-body, .citations-body { padding: 12px 16px 16px; }
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 20px 18px 18px; gap: 12px; flex-wrap: wrap; }
+    .header-sub { display: none; }
+    main { padding: 24px 16px 0; }
+    .sections-grid { grid-template-columns: 1fr; }
+    .section { border-right: none; border-bottom: 1.5px solid var(--rule); }
+    .section:last-child { border-bottom: none; }
+    .card-header { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="header-logo">NCQA</span>
+  <span class="header-title">HEDIS Measure Explainer</span>
+  <span class="header-sub">MY 2024/2025 · Plain-language reference</span>
+</header>
+
+<main>
+  <div class="search-section">
+    <label class="search-label" for="measureSelect">Select a HEDIS measure</label>
+    <div class="search-row">
+      <select class="measure-select" id="measureSelect">
+        <option value="">— Choose a measure —</option>
+        <optgroup label="Cardiovascular">
+          <option value="CBP – Controlling High Blood Pressure">CBP – Controlling High Blood Pressure</option>
+          <option value="COL – Colorectal Cancer Screening">COL – Colorectal Cancer Screening</option>
+          <option value="PBH – Persistence of Beta-Blocker Treatment After a Heart Attack">PBH – Persistence of Beta-Blocker Treatment</option>
+        </optgroup>
+        <optgroup label="Diabetes">
+          <option value="CDC – HbA1c Poor Control (>9%)">CDC – HbA1c Poor Control (&gt;9%)</option>
+          <option value="CDC – HbA1c Control (<8%)">CDC – HbA1c Control (&lt;8%)</option>
+          <option value="CDC – Blood Pressure Control (<140/90)">CDC – Blood Pressure Control (&lt;140/90)</option>
+          <option value="CDC – Eye Exam">CDC – Eye Exam</option>
+          <option value="CDC – Kidney Health Evaluation">CDC – Kidney Health Evaluation</option>
+        </optgroup>
+        <optgroup label="Cancer Screening">
+          <option value="BCS – Breast Cancer Screening">BCS – Breast Cancer Screening</option>
+          <option value="CCS – Cervical Cancer Screening">CCS – Cervical Cancer Screening</option>
+          <option value="COL – Colorectal Cancer Screening">COL – Colorectal Cancer Screening</option>
+        </optgroup>
+        <optgroup label="Behavioral Health">
+          <option value="FUH – Follow-Up After Hospitalization for Mental Illness">FUH – Follow-Up After Hospitalization for Mental Illness</option>
+          <option value="FUM – Follow-Up After Emergency Department Visit for Mental Illness">FUM – Follow-Up After ED Visit for Mental Illness</option>
+          <option value="ADD – Follow-Up Care for Children Prescribed ADHD Medication">ADD – Follow-Up Care for Children Prescribed ADHD Medication</option>
+          <option value="SAA – Adherence to Antipsychotic Medications for Schizophrenia">SAA – Adherence to Antipsychotics for Schizophrenia</option>
+          <option value="AIS – Adult Immunization Status">AIS – Adult Immunization Status</option>
+        </optgroup>
+        <optgroup label="Child & Adolescent">
+          <option value="AWC – Annual Well-Child Visits">AWC – Annual Well-Child Visits</option>
+          <option value="CHL – Chlamydia Screening in Women">CHL – Chlamydia Screening in Women</option>
+          <option value="W34 – Well-Child Visits in the First 30 Months of Life">W34 – Well-Child Visits (First 30 Months)</option>
+          <option value="IMA – Immunizations for Adolescents">IMA – Immunizations for Adolescents</option>
+        </optgroup>
+        <optgroup label="Medication Management">
+          <option value="MRP – Medication Reconciliation Post-Discharge">MRP – Medication Reconciliation Post-Discharge</option>
+          <option value="MAD – Medication Adherence for Diabetes Medications">MAD – Medication Adherence for Diabetes</option>
+          <option value="MAS – Medication Adherence for Cholesterol (Statins)">MAS – Medication Adherence for Statins</option>
+          <option value="MAP – Medication Adherence for Hypertension (RAS antagonists)">MAP – Medication Adherence for Hypertension (RAS)</option>
+        </optgroup>
+        <optgroup label="Access & Utilization">
+          <option value="AAP – Ambulatory Care: Outpatient Visits">AAP – Ambulatory Care: Outpatient Visits</option>
+          <option value="PPC – Prenatal and Postpartum Care">PPC – Prenatal and Postpartum Care</option>
+          <option value="PCR – Plan All-Cause Readmissions">PCR – Plan All-Cause Readmissions</option>
+        </optgroup>
+      </select>
+      <button class="search-btn" id="searchBtn" onclick="lookupMeasure()">EXPLAIN</button>
+    </div>
+  </div>
+
+  <div class="loading-state" id="loadingState">
+    <div class="spinner"></div>
+    <span>Retrieving measure specifications…</span>
+  </div>
+
+  <div class="error-state" id="errorState"></div>
+
+  <div class="results-card" id="resultsCard">
+    <div id="resultsContent"></div>
+  </div>
+
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">⊕</div>
+    <div class="empty-title">Search any HEDIS measure</div>
+    <div class="empty-sub">Type a measure name, abbreviation, or description above.<br>Covers HEDIS MY 2024 / 2025 specifications.</div>
+  </div>
+</main>
+
+<script>
+const measureSelect  = document.getElementById('measureSelect');
+const searchBtn      = document.getElementById('searchBtn');
+const loadingEl      = document.getElementById('loadingState');
+const errorEl        = document.getElementById('errorState');
+const resultsCard    = document.getElementById('resultsCard');
+const resultsContent = document.getElementById('resultsContent');
+const emptyState     = document.getElementById('emptyState');
+
+measureSelect.addEventListener('change', () => { if (measureSelect.value) lookupMeasure(); });
+
+function showState(which) {
+  loadingEl.classList.toggle('visible', which === 'loading');
+  errorEl.classList.toggle('visible',   which === 'error');
+  resultsCard.classList.toggle('visible', which === 'results');
+  emptyState.style.display = which === 'empty' ? 'block' : 'none';
+}
+
+function buildSystemPrompt() {
+  return [
+    "You are a HEDIS measure expert with deep knowledge of NCQA specifications (MY 2024/2025).",
+    "When given a measure name or abbreviation, return a structured JSON object ONLY — no markdown, no preamble, no backticks.",
+    "",
+    "Return exactly this JSON shape:",
+    '{',
+    '  "measureId": "abbreviation e.g. CBP",',
+    '  "measureName": "Full official measure name",',
+    '  "domain": "e.g. Effectiveness of Care / Commercial",',
+    '  "tags": ["2-4 short topic tags"],',
+    '  "shortDescription": "One sentence summary.",',
+    '  "denominator": {',
+    '    "summary": "2-3 sentence plain-language description of the eligible population.",',
+    '    "keyDetails": ["age range", "enrollment requirement", "diagnosis requirement"]',
+    '  },',
+    '  "numerator": {',
+    '    "summary": "2-3 sentence plain-language description of what counts as a compliant event.",',
+    '    "keyDetails": ["qualifying service or result", "timeframe", "allowed sources"]',
+    '  },',
+    '  "exclusions": {',
+    '    "summary": "Plain-language summary of exclusions.",',
+    '    "items": ["Exclusion 1", "Exclusion 2", "Exclusion 3"]',
+    '  },',
+    '  "dataPitfalls": [',
+    '    {"title": "Short title", "detail": "Why this trips up analysts or coders."},',
+    '    {"title": "Short title", "detail": "Why this trips up analysts or coders."}',
+    '  ],',
+    '  "codeSets": [',
+    '    {',
+    '      "component": "e.g. Denominator – Eligible Diagnosis",',
+    '      "description": "What this code set identifies",',
+    '      "codeTypes": [',
+    '        {',
+    '          "type": "e.g. ICD-10-CM",',
+    '          "codes": ["I10", "I11.0", "I11.9"],',
+    '          "note": "brief note e.g. partial list — see NCQA Value Set Directory"',
+    '        }',
+    '      ]',
+    '    }',
+    '  ],',
+    '  "citations": [',
+    '    {',
+    '      "source": "e.g. NCQA HEDIS MY 2025 Vol. 2: Technical Specifications",',
+    '      "detail": "e.g. Controlling High Blood Pressure, pp. 143-152",',
+    '      "url": "public URL or null"',
+    '    }',
+    '  ],',
+    '  "formulaNote": "e.g. Numerator / Denominator x 100 — higher = better"',
+    '}',
+    "",
+    "codeSets rules: include 4-8 representative codes per code type for each major component (denominator diagnosis/procedure, numerator procedure/result, exclusion diagnosis). For large value sets note the full list is in the NCQA Value Set Directory. Use real, accurate codes only.",
+    "citations rules: always cite (1) the NCQA HEDIS specification volume and page range, (2) the NCQA Value Set Directory, and (3) any CMS or supplemental sources. Include public URLs where available.",
+    "If the measure is ambiguous, pick the most commonly reported sub-measure and note it in shortDescription.",
+    'If no match, set measureId to "NOT_FOUND" and explain in measureName.'
+  ].join('\n');
+}
+
+async function lookupMeasure() {
+  const query = measureSelect.value.trim();
+  if (!query) return;
+
+  searchBtn.disabled = true;
+  showState('loading');
+  errorEl.textContent = '';
+
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system: buildSystemPrompt(),
+        messages: [{ role: "user", content: "Look up this HEDIS measure: " + query }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw  = (data.content || []).map(b => b.text || '').join('').trim();
+    const clean = raw.replace(/^```(?:json)?|```$/gm, '').trim();
+    const measure = JSON.parse(clean);
+
+    if (measure.measureId === 'NOT_FOUND') {
+      errorEl.textContent = 'No HEDIS measure matched "' + query + '". Please select a different measure.';
+      showState('error');
+      return;
+    }
+
+    renderResults(measure);
+    showState('results');
+
+  } catch(err) {
+    errorEl.textContent = 'Something went wrong retrieving the measure. Please try again. (' + err.message + ')';
+    showState('error');
+    console.error(err);
+  } finally {
+    searchBtn.disabled = false;
+  }
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function renderCodeSets(codeSets) {
+  if (!codeSets || !codeSets.length) return '';
+  return codeSets.map(cs => {
+    const typeBlocks = (cs.codeTypes || []).map(ct => {
+      const chips = (ct.codes || []).map(c =>
+        '<span class="code-chip">' + esc(c) + '</span>'
+      ).join('');
+      return '<div class="code-type-block">'
+        + '<span class="code-type-label">' + esc(ct.type) + '</span>'
+        + '<div class="code-chips">' + chips + '</div>'
+        + (ct.note ? '<div class="code-note">' + esc(ct.note) + '</div>' : '')
+        + '</div>';
+    }).join('');
+    return '<div class="codeset-block">'
+      + '<div class="codeset-component">' + esc(cs.component) + '</div>'
+      + '<div class="codeset-desc">' + esc(cs.description) + '</div>'
+      + typeBlocks
+      + '</div>';
+  }).join('');
+}
+
+function renderCitations(citations) {
+  if (!citations || !citations.length) return '';
+  return citations.map(c => {
+    const link = c.url
+      ? '<a class="citation-url" href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(c.url) + '</a>'
+      : '';
+    return '<div class="citation-item">'
+      + '<div class="citation-source">' + esc(c.source) + '</div>'
+      + '<div class="citation-detail">' + esc(c.detail) + '</div>'
+      + (link ? '<div>' + link + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function renderResults(m) {
+  const tags        = (m.tags || []).map(t => '<span class="measure-tag">' + esc(t) + '</span>').join('');
+  const denomDets   = (m.denominator?.keyDetails || []).map(d => '<li>' + esc(d) + '</li>').join('');
+  const numerDets   = (m.numerator?.keyDetails   || []).map(d => '<li>' + esc(d) + '</li>').join('');
+  const exclItems   = (m.exclusions?.items        || []).map(d => '<li>' + esc(d) + '</li>').join('');
+  const pitfalls    = (m.dataPitfalls             || []).map(p =>
+    '<div class="pitfall-item"><span class="pitfall-bullet">⚑</span><div><strong>' + esc(p.title) + ':</strong> ' + esc(p.detail) + '</div></div>'
+  ).join('');
+  const codeSetsHtml  = renderCodeSets(m.codeSets);
+  const citationsHtml = renderCitations(m.citations);
+
+  resultsContent.innerHTML =
+    '<div class="card-header">'
+    + '<div>'
+    +   '<div class="measure-id">' + esc(m.measureId) + ' · ' + esc(m.domain) + '</div>'
+    +   '<div class="measure-name">' + esc(m.measureName) + '</div>'
+    +   '<div class="measure-desc">' + esc(m.shortDescription) + '</div>'
+    + '</div>'
+    + '<div class="measure-tags">' + tags + '</div>'
+    + '</div>'
+
+    + '<div class="sections-grid">'
+
+    + '<div class="section">'
+    +   '<div class="section-header"><div class="section-icon icon-denom">🧮</div><span class="section-title">Denominator</span></div>'
+    +   '<div class="section-body"><p>' + esc(m.denominator?.summary) + '</p>'
+    +     (denomDets ? '<ul style="margin-top:10px">' + denomDets + '</ul>' : '')
+    +   '</div>'
+    + '</div>'
+
+    + '<div class="section">'
+    +   '<div class="section-header"><div class="section-icon icon-numer">✓</div><span class="section-title">Numerator</span></div>'
+    +   '<div class="section-body"><p>' + esc(m.numerator?.summary) + '</p>'
+    +     (numerDets ? '<ul style="margin-top:10px">' + numerDets + '</ul>' : '')
+    +   '</div>'
+    + '</div>'
+
+    + '<div class="section">'
+    +   '<div class="section-header"><div class="section-icon icon-excl">⊘</div><span class="section-title">Exclusions</span></div>'
+    +   '<div class="section-body"><p>' + esc(m.exclusions?.summary) + '</p>'
+    +     (exclItems ? '<ul style="margin-top:10px">' + exclItems + '</ul>' : '')
+    +   '</div>'
+    + '</div>'
+
+    + '<div class="section">'
+    +   '<div class="section-header"><div class="section-icon icon-pitfall">⚑</div><span class="section-title">Data &amp; Coding Pitfalls</span></div>'
+    +   '<div class="section-body">' + (pitfalls || '<p>No common pitfalls documented.</p>') + '</div>'
+    + '</div>'
+
+    + '</div>' // end sections-grid
+
+    + (codeSetsHtml ? '<div class="codesets-section"><div class="section-header" style="padding:20px 28px 0"><div class="section-icon" style="background:#f0eaf8">🗂</div><span class="section-title">Code Sets</span></div><div class="codesets-body">' + codeSetsHtml + '</div></div>' : '')
+
+    + (citationsHtml ? '<div class="citations-section"><div class="section-header" style="padding:20px 28px 0"><div class="section-icon" style="background:#eaf0f8">📄</div><span class="section-title">Sources &amp; Citations</span></div><div class="citations-body">' + citationsHtml + '</div></div>' : '')
+
+    + (m.formulaNote ? '<div class="formula-row"><span class="formula-label">Rate</span><span class="formula-text">' + esc(m.formulaNote) + '</span></div>' : '');
+}
+</script>
+</body>
+</html>
