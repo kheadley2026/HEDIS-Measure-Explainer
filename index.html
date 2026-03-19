@@ -174,7 +174,7 @@ const MEASURES = {
     ],
     citations:[
       {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Controlling High Blood Pressure (CBP), Effectiveness of Care", url:"https://www.ncqa.org/hedis/measures/controlling-high-blood-pressure/"},
-      {source:"NCQA Value Set Directory", detail:"Hypertension, Blood Pressure value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+      {source:"NCQA HEDIS MY 2025 Value Set Directory", detail:"Available via NCQA Store (Value Set Directory included with Volume 2 purchase)", url:"https://store.ncqa.org/hedis/hedis-my-2025.html"}
     ],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
@@ -196,7 +196,7 @@ const MEASURES = {
     ],
     citations:[
       {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Persistence of Beta-Blocker Treatment After a Heart Attack (PBH)", url:"https://www.ncqa.org/hedis/measures/persistence-of-beta-blocker-treatment-after-a-heart-attack/"},
-      {source:"NCQA Value Set Directory", detail:"AMI Diagnosis, Beta-Blocker Medications value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+      {source:"NCQA HEDIS MY 2025 Value Set Directory", detail:"Available via NCQA Store (Value Set Directory included with Volume 2 purchase)", url:"https://store.ncqa.org/hedis/hedis-my-2025.html"}
     ],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
@@ -218,8 +218,8 @@ const MEASURES = {
       {component:"Numerator – HbA1c Lab Result", description:"Hemoglobin A1c LOINC codes; result >9.0% triggers numerator", codeTypes:[{type:"LOINC", codes:["4548-4","4549-2","17856-6","59261-8","62388-4","71875-9"], note:"HbA1c as % (4548-4 most common); result threshold >9.0%"}]}
     ],
     citations:[
-      {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – HbA1c Poor Control indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"},
-      {source:"NCQA Value Set Directory", detail:"Diabetes, HbA1c Tests value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+      {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"NCQA HEDIS Measures hub — search Glycemic Status Assessment (GSA); full specs in HEDIS MY 2025 Volume 2 (NCQA Store)", url:"https://www.ncqa.org/hedis/measures/"},
+      {source:"NCQA HEDIS MY 2025 Value Set Directory", detail:"Available via NCQA Store (Value Set Directory included with Volume 2 purchase)", url:"https://store.ncqa.org/hedis/hedis-my-2025.html"}
     ],
     formulaNote:"Numerator / Denominator × 100 — LOWER rate = better performance (inverse measure)"
   },
@@ -239,7 +239,7 @@ const MEASURES = {
       {component:"Denominator – Diabetes Diagnosis", description:"Type 1 and Type 2 diabetes", codeTypes:[{type:"ICD-10-CM", codes:["E10.9","E11.9","E11.65","E10.65","E11.40","E10.40"], note:"All E10.x and E11.x subcodes included in full value set"}]},
       {component:"Numerator – HbA1c Lab Result", description:"HbA1c codes; result <8.0% required for numerator", codeTypes:[{type:"LOINC", codes:["4548-4","4549-2","17856-6","59261-8"], note:"Result threshold <8.0% for this indicator"}]}
     ],
-    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – HbA1c Control (<8%) indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"}],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"NCQA HEDIS Measures hub — search Glycemic Status Assessment (GSA); full specs in HEDIS MY 2025 Volume 2 (NCQA Store)", url:"https://www.ncqa.org/hedis/measures/"}],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
   CDC_BP: {
@@ -257,7 +257,7 @@ const MEASURES = {
       {component:"Denominator – Diabetes Diagnosis", description:"Type 1 and Type 2 diabetes", codeTypes:[{type:"ICD-10-CM", codes:["E10.9","E11.9","E11.65","E10.65"], note:"All E10.x and E11.x subcodes included"}]},
       {component:"Numerator – Blood Pressure Values", description:"Blood pressure LOINC codes", codeTypes:[{type:"LOINC", codes:["8480-6","8462-4","55284-4"], note:"Systolic (8480-6), Diastolic (8462-4), BP panel (55284-4)"}]}
     ],
-    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – Blood Pressure Control indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"}],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"NCQA HEDIS Measures hub — search Blood Pressure Control for Patients With Diabetes; full specs in HEDIS MY 2025 Volume 2", url:"https://www.ncqa.org/hedis/measures/"}],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
   CDC_EYE: {
@@ -278,7 +278,7 @@ const MEASURES = {
         {type:"HCPCS", codes:["G0053","G0054"], note:"Remote retinal imaging (teleretinal) codes"}
       ]}
     ],
-    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – Eye Exam (Retinal) indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"}],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"NCQA HEDIS Measures hub — search Eye Exam for Patients With Diabetes; full specs in HEDIS MY 2025 Volume 2", url:"https://www.ncqa.org/hedis/measures/"}],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
   CDC_KED: {
@@ -297,7 +297,7 @@ const MEASURES = {
       {component:"Numerator – Urine Albumin", description:"Urine albumin and microalbumin lab LOINC codes", codeTypes:[{type:"LOINC", codes:["14957-5","14958-3","14959-1","30000-4","32294-1","9318-7"], note:"Microalbumin/creatinine ratio (14957-5), 24-hr urine albumin, spot urine tests"}]},
       {component:"Numerator – Creatinine / eGFR", description:"Kidney function lab codes", codeTypes:[{type:"LOINC", codes:["2160-0","38483-4","70969-1","48642-3","48643-1","33914-3"], note:"Serum creatinine (2160-0), eGFR CKD-EPI (70969-1), MDRD-based eGFR codes"}]}
     ],
-    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Comprehensive Diabetes Care (CDC) – Kidney Health Evaluation indicator", url:"https://www.ncqa.org/hedis/measures/comprehensive-diabetes-care/"}],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"NCQA HEDIS Measures hub — search Kidney Health Evaluation for Patients With Diabetes; full specs in HEDIS MY 2025 Volume 2", url:"https://www.ncqa.org/hedis/measures/"}],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
   BCS: {
@@ -324,7 +324,7 @@ const MEASURES = {
     ],
     citations:[
       {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Breast Cancer Screening (BCS)", url:"https://www.ncqa.org/hedis/measures/breast-cancer-screening/"},
-      {source:"NCQA Value Set Directory", detail:"Mammography, Mastectomy value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+      {source:"NCQA HEDIS MY 2025 Value Set Directory", detail:"Available via NCQA Store (Value Set Directory included with Volume 2 purchase)", url:"https://store.ncqa.org/hedis/hedis-my-2025.html"}
     ],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
@@ -379,7 +379,7 @@ const MEASURES = {
     ],
     citations:[
       {source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Colorectal Cancer Screening (COL)", url:"https://www.ncqa.org/hedis/measures/colorectal-cancer-screening/"},
-      {source:"NCQA Value Set Directory", detail:"Colonoscopy, CT Colonography, Sigmoidoscopy, FOBT, FIT-DNA value sets", url:"https://www.ncqa.org/hedis/hedis-tools-and-resources/value-set-directory/"}
+      {source:"NCQA HEDIS MY 2025 Value Set Directory", detail:"Available via NCQA Store (Value Set Directory included with Volume 2 purchase)", url:"https://store.ncqa.org/hedis/hedis-my-2025.html"}
     ],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
@@ -538,7 +538,7 @@ const MEASURES = {
         {type:"LOINC", codes:["14461-8","21613-5","36902-5","42931-6"], note:"Chlamydia trachomatis NAAT panel LOINC codes"}
       ]}
     ],
-    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Chlamydia Screening in Women (CHL)", url:"https://www.ncqa.org/hedis/measures/chlamydia-screening-in-women/"}],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Chlamydia Screening (CHL) — renamed from Chlamydia Screening in Women in MY 2025; search NCQA HEDIS Measures hub for current page", url:"https://www.ncqa.org/hedis/measures/"}],
     formulaNote:"Numerator / Denominator × 100 — higher rate = better performance"
   },
   MRP: {
@@ -635,7 +635,7 @@ const MEASURES = {
       {component:"Numerator – Prenatal Visit", description:"Prenatal care visit codes", codeTypes:[{type:"CPT", codes:["59425","59426","0501F","0502F","0503F"], note:"Antepartum care (59425/59426), Category II prenatal visit codes (0501F–0503F)"}]},
       {component:"Numerator – Postpartum Visit", description:"Postpartum care visit codes", codeTypes:[{type:"CPT", codes:["59430","99501","0503F"], note:"Postpartum care (59430), home visit (99501)"}]}
     ],
-    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Prenatal and Postpartum Care (PPC)", url:"https://www.ncqa.org/hedis/measures/prenatal-and-postpartum-care/"}],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Prenatal and Postpartum Care (PPC)", url:"https://www.ncqa.org/hedis/measures/prenatal-and-postpartum-care-ppc/"}],
     formulaNote:"Two rates — higher rate = better performance for both"
   },
   PCR: {
@@ -654,7 +654,7 @@ const MEASURES = {
       {component:"Denominator – Acute Inpatient Stay", description:"Acute inpatient claim type identification", codeTypes:[{type:"UB-04 Bill Type", codes:["11X","12X"], note:"Hospital inpatient (11X) and hospital inpatient Part B (12X) — used to identify acute inpatient claims"}]},
       {component:"Exclusion – Mental Health Index Stays", description:"Mental/behavioral health principal diagnoses excluded as index events", codeTypes:[{type:"ICD-10-CM", codes:["F01–F99 (chapter range)"], note:"Mental, behavioral, and neurodevelopmental disorder chapter excluded as index but NOT excluded as readmission events"}]}
     ],
-    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Plan All-Cause Readmissions (PCR), Utilization chapter", url:"https://www.ncqa.org/hedis/measures/plan-all-cause-readmissions/"}],
+    citations:[{source:"NCQA HEDIS MY 2025, Volume 2: Technical Specifications", detail:"Plan All-Cause Readmissions (PCR), Utilization chapter", url:"https://ncqa.org/hedis/measures/plan-all-cause-readmissions"}],
     formulaNote:"Observed readmissions / Expected readmissions — ratio <1.0 = better than expected performance"
   },
   AIS: {
